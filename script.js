@@ -97,10 +97,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // 4. Form Submission Mockup
+    // Initialize Supabase Client
+    const supabaseUrl = 'https://zdmiylgzioarginxrmbd.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpkbWl5bGd6aW9hcmdpbnhybWJkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE1MDAzNzIsImV4cCI6MjA4NzA3NjM3Mn0.xHFSB1pJYB28rMUH57YrOyMNWPwfNh_PXNigHwVSqRM';
+    const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+    // 4. Real Form Submission to Supabase
     const uploadForm = document.getElementById('uploadForm');
     if (uploadForm) {
-        uploadForm.addEventListener('submit', (e) => {
+        uploadForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             
             const submitBtn = document.getElementById('submitBtn');
@@ -111,18 +116,70 @@ document.addEventListener('DOMContentLoaded', () => {
             submitBtn.disabled = true;
             submitBtn.style.opacity = '0.7';
 
-            // Simulate API call delay
-            setTimeout(() => {
+            try {
+                // Collect values
+                const fullName = document.getElementById('fullName').value;
+                const phone = document.getElementById('phone').value;
+                const serviceType = document.getElementById('serviceType').value;
+                
+                let fileUrl = null;
+                const fileInput = document.getElementById('fileUpload');
+                const selectedFile = fileInput.files[0];
+
+                if (selectedFile) {
+                    submitBtn.textContent = 'Subiendo documento...';
+                    
+                    const fileExt = selectedFile.name.split('.').pop();
+                    const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+                    const filePath = `solicitudes/${fileName}`;
+
+                    // Upload file to Supabase Storage
+                    const { data: uploadData, error: uploadError } = await supabaseClient
+                        .storage
+                        .from('documentos')
+                        .upload(filePath, selectedFile);
+                    
+                    if (uploadError) throw uploadError;
+
+                    // Get public URL
+                    const { data: publicUrlData } = supabaseClient
+                        .storage
+                        .from('documentos')
+                        .getPublicUrl(filePath);
+                        
+                    fileUrl = publicUrlData.publicUrl;
+                }
+
+                submitBtn.textContent = 'Guardando registro...';
+                
+                // Insert record into Supabase Database
+                const { data: insertData, error: insertError } = await supabaseClient
+                    .from('clientes')
+                    .insert([
+                        { 
+                            nombre_completo: fullName, 
+                            telefono: phone, 
+                            tipo_tramite: serviceType,
+                            archivo_url: fileUrl
+                        }
+                    ]);
+
+                if (insertError) throw insertError;
+
                 alert('¡Solicitud enviada con éxito! Un asesor de ClickSalud se pondrá en contacto pronto.');
                 uploadForm.reset();
                 if(fileNameDisplay) fileNameDisplay.textContent = '';
                 if(fileMsg) fileMsg.textContent = 'Haz clic o arrastra tu archivo aquí';
-                
+
+            } catch (error) {
+                console.error("Error al enviar solicitud:", error);
+                alert("Ocurrió un error al enviar tu solicitud: " + error.message);
+            } finally {
                 // Restore button
                 submitBtn.textContent = originalText;
                 submitBtn.disabled = false;
                 submitBtn.style.opacity = '1';
-            }, 1500);
+            }
         });
     }
 });
