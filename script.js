@@ -113,7 +113,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Simulate API call delay
             setTimeout(() => {
-                alert('¡Solicitud enviada con éxito! Un asesor de SaludGestión se pondrá en contacto pronto.');
+                alert('¡Solicitud enviada con éxito! Un asesor de Vitall se pondrá en contacto pronto.');
                 uploadForm.reset();
                 if(fileNameDisplay) fileNameDisplay.textContent = '';
                 if(fileMsg) fileMsg.textContent = 'Haz clic o arrastra tu archivo aquí';
