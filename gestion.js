@@ -137,6 +137,15 @@ function renderTabla(lista) {
         
         let textoTiempo = diffDays === 1 ? '1 día (Hoy)' : `${diffDays} días`;
 
+        // Apagar / Detener semáforo si el ticket ya no requiere gestión
+        if (estadoActual === 'Gestionado') {
+            colorSemaforo = '#3b82f6'; // Azul: resuelto exitosamente
+            textoTiempo = 'Completado';
+        } else if (estadoActual === 'Rechazado') {
+            colorSemaforo = '#94a3b8'; // Gris: archivado/rechazado
+            textoTiempo = 'Archivado';
+        }
+
         let alertClass = '';
         if (estadoActual === 'Pendiente' && diffDays >= 3) {
             alertClass = 'row-alert';
