@@ -19,6 +19,9 @@ function formatearFecha(fechaIso) {
 
 // 3. Función principal para extraer los datos de la base de datos
 async function cargarTickets() {
+    const user = Auth.requireAuth('gestion');
+    if(!user) return;
+
     const tbody = document.getElementById('ticketsTabla');
     
     // Mostramos estado de carga
@@ -33,12 +36,17 @@ async function cargarTickets() {
 
     try {
         // Pedimos todos los registros de la tabla "clientes", ordenados del más reciente al más antiguo
-        const { data: tickets, error } = await supabaseClient
+        let { data: tickets, error } = await supabaseClient
             .from('clientes')
             .select('*')
             .order('created_at', { ascending: false });
 
         if (error) throw error;
+
+        // Filtramos por permisos (Dependiendo del rol del usuario en auth.js)
+        if(user && user.tramites) {
+            tickets = tickets.filter(ticket => user.tramites.includes(ticket.tipo_tramite));
+        }
 
         // Limpiamos la tabla
         tbody.innerHTML = '';

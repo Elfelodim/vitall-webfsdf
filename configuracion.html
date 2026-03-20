@@ -113,13 +113,7 @@
             </div>
             
             <div style="display: flex; gap: 1rem; align-items: center;">
-                <a href="index.html" class="btn btn-sm" style="background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.3); text-decoration: none; display: flex; align-items: center; gap: 0.3rem;">
-                        <i class="ph ph-house"></i> Inicio
-                </a>
-                <div style="display: flex; align-items: center; gap: 0.5rem; color: white;">
-                    <div style="width: 35px; height: 35px; background: var(--blue-light); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;">IT</div>
-                    <span style="font-size: 0.9rem;">Sistemas</span>
-                </div>
+                <div class="header-user-info" style="margin-left: 1rem; padding-left: 1rem; border-left: 1px solid rgba(255,255,255,0.2);"></div>
             </div>
         </div>
     </header>
@@ -213,5 +207,10 @@
         </div>
     </main>
 
+    <script src="auth.js"></script>
+    <script>
+        // Restricción de acceso para el módulo 'sistemas'
+        const currentUser = Auth.requireAuth('sistemas');
+    </script>
 </body>
 </html>

@@ -147,12 +147,10 @@
             </div>
             
             <div style="display: flex; gap: 1rem; align-items: center;">
-                <a href="index.html" class="btn btn-sm" style="background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.3); text-decoration: none; display: flex; align-items: center; gap: 0.3rem;">
-                        <i class="ph ph-house"></i> Inicio
-                </a>
                 <button class="btn btn-primary-outline btn-sm" onclick="cargarTickets()" style="background: transparent; color: white; border-color: white;">
                     <i class="ph ph-arrows-clockwise"></i> Actualizar
                 </button>
+                <div class="header-user-info" style="margin-left: 1rem; padding-left: 1rem; border-left: 1px solid rgba(255,255,255,0.2);"></div>
             </div>
         </div>
     </header>
@@ -189,6 +187,7 @@
 
     <!-- Supabase & Custom Script -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="auth.js"></script>
     <script src="gestion.js"></script>
 </body>
 </html>
