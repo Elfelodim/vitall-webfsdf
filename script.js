@@ -193,7 +193,8 @@ document.addEventListener('DOMContentLoaded', () => {
                             telefono: phone, 
                             tipo_tramite: serviceType,
                             archivo_url: fileUrl,
-                            observaciones: observations
+                            observaciones: observations,
+                            consentimiento_datos: true
                         }
                     ]);
 

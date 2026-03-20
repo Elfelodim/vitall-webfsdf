@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Iniciar Sesión | ClickSalud</title>
+    <title>Cambiar Contraseña | ClickSalud</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -58,7 +58,7 @@
             border: 1px solid var(--gray-300);
             border-radius: var(--radius-md);
         }
-        #loginError {
+        #errorMsg {
             color: #ef4444;
             font-size: 0.85rem;
             background: #fef2f2;
@@ -75,23 +75,22 @@
             <a href="index.html" class="logo">
                 <img src="assets/images/logo.png" alt="ClickSalud Logo" style="height: 70px; object-fit: contain;">
             </a>
-            <h2>Acceso a Plataforma</h2>
-            <p>Ingresa tus credenciales para continuar</p>
+            <h2>Cambio Necesario</h2>
+            <p>Por seguridad, debes crear una contraseña propia que solo tú conozcas.</p>
             
-            <div id="loginError"><i class="ph-bold ph-warning-circle"></i> Usuario o contraseña incorrectos.</div>
+            <div id="errorMsg"><i class="ph-bold ph-warning-circle"></i> Las contraseñas no coinciden.</div>
 
-            <form id="loginForm">
+            <form id="changePasswordForm">
                 <div class="form-group">
-                    <label for="email">Correo electrónico</label>
-                    <input type="email" id="email" required placeholder="ejemplo@clicksalud.com">
+                    <label for="newPass">Nueva Contraseña</label>
+                    <input type="password" id="newPass" required placeholder="Ingresa al menos 6 caracteres" minlength="6">
                 </div>
                 <div class="form-group">
-                    <label for="password">Contraseña</label>
-                    <input type="password" id="password" required placeholder="••••••••">
+                    <label for="confirmPass">Confirma Contraseña</label>
+                    <input type="password" id="confirmPass" required placeholder="Repite la contraseña">
                 </div>
-                <button type="submit" class="btn btn-primary btn-block" id="loginBtn">Ingresar ahora</button>
+                <button type="submit" class="btn btn-primary btn-block" id="btnSave">Guardar y Entrar</button>
             </form>
-            <p style="margin-top: 1.5rem; font-size: 0.8rem; color: var(--gray-500);">Solo personal autorizado</p>
         </div>
     </div>
 
@@ -99,31 +98,61 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="auth.js"></script>
     <script>
-        document.getElementById('loginForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const email = document.getElementById('email').value;
-            const pass = document.getElementById('password').value;
-            const btn = document.getElementById('loginBtn');
-            const errorDiv = document.getElementById('loginError');
+        document.addEventListener('DOMContentLoaded', () => {
+            const user = Auth.getCurrentUser();
+            if(!user || !user.must_change_password) {
+                window.location.href = 'login.html';
+            }
+        });
 
-            btn.textContent = "Verificando...";
+        document.getElementById('changePasswordForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const pass1 = document.getElementById('newPass').value;
+            const pass2 = document.getElementById('confirmPass').value;
+            const btn = document.getElementById('btnSave');
+            const errorDiv = document.getElementById('errorMsg');
+
+            if(pass1 !== pass2) {
+                errorDiv.textContent = 'Las contraseñas no coinciden.';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            btn.textContent = "Actualizando...";
             btn.disabled = true;
             errorDiv.style.display = 'none';
 
-            const status = await Auth.login(email, pass);
-            
-            if(status === 'SUCCESS') {
-                // Redirigir al primer módulo al que tenga acceso
+            try {
                 const user = Auth.getCurrentUser();
+                const newHash = await Auth.hashPassword(pass1);
+
+                // Update in Supabase
+                const client = Auth.getClient();
+                if(client) {
+                    const { error } = await client
+                        .from('usuarios')
+                        .update({ password_hash: newHash, must_change_password: false })
+                        .eq('email', user.email);
+
+                    if(error) {
+                        console.warn("No se pudo conectar a la DB real. Simulando en local.");
+                    }
+                }
+
+                // Update local session
+                user.must_change_password = false;
+                localStorage.setItem('clicksalud_session', JSON.stringify(user));
+
+                // Redirect based on roles
                 if(user.modulos.includes('gestion')) window.location.href = 'gestion.html';
                 else if(user.modulos.includes('admin')) window.location.href = 'admin.html';
                 else if(user.modulos.includes('sistemas')) window.location.href = 'configuracion.html';
-                else window.location.href = 'index.html'; // Fallback
-            } else if (status === 'CHANGE_PASSWORD') {
-                window.location.href = 'cambiar_clave.html';
-            } else {
+                else window.location.href = 'index.html';
+
+            } catch (error) {
+                errorDiv.textContent = 'Hubo un error del sistema. Reintenta.';
                 errorDiv.style.display = 'block';
-                btn.textContent = "Ingresar ahora";
+                btn.textContent = "Guardar y Entrar";
                 btn.disabled = false;
             }
         });

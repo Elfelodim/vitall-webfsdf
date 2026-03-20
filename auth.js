@@ -43,10 +43,19 @@ const Auth = {
         }
     ],
 
+    // Hash de contraseña en frontend (Cifrado SHA-256)
+    async hashPassword(password) {
+        const msgBuffer = new TextEncoder().encode(password);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    },
+
     async login(email, password) {
         let validUser = null;
+        let pHash = await this.hashPassword(password);
 
-        // 1. Intenta validar contra la base de datos Supabase si la tabla 'usuarios' existe
+        // 1. Intenta validar contra la base de datos Supabase
         try {
             const client = this.getClient();
             if(client) {
@@ -54,7 +63,7 @@ const Auth = {
                     .from('usuarios')
                     .select('*')
                     .eq('email', email)
-                    .eq('password', password)
+                    .eq('password_hash', pHash)
                     .single();
                     
                 if(!error && data) {
@@ -68,16 +77,21 @@ const Auth = {
             console.warn("Tabla usuarios en Supabase no encontrada o con formato incorrecto. Usando modo local (Prototipo).");
         }
 
-        // 2. Si no encontró en base de datos real, busca en los usuarios predefinidos
+        // 2. Si no encontró en BD, busca en Mock (donde la clave está cruda)
         if(!validUser) {
             validUser = this.mockUsers.find(u => u.email === email && u.password === password);
         }
 
         if(validUser) {
             localStorage.setItem('clicksalud_session', JSON.stringify(validUser));
-            return true;
+            
+            // Si el usuario necesita cambiar clave
+            if(validUser.must_change_password) {
+                return 'CHANGE_PASSWORD';
+            }
+            return 'SUCCESS';
         }
-        return false;
+        return 'FAILED';
     },
 
     logout() {
@@ -105,6 +119,12 @@ const Auth = {
             else if(user.modulos.includes('admin')) window.location.href = 'admin.html';
             else if(user.modulos.includes('sistemas')) window.location.href = 'configuracion.html';
             else this.logout();
+            return null;
+        }
+
+        // Si el usuario requiere cambio de clave, nunca dejarlo pasar a otros lados
+        if(user.must_change_password && !window.location.pathname.endsWith('cambiar_clave.html')) {
+            window.location.href = 'cambiar_clave.html';
             return null;
         }
 

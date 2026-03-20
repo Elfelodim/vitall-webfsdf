@@ -202,15 +202,117 @@
                         </div>
                     </form>
                 </div>
+            </div> <!-- Termina config-grid anterior -->
+
+            <div class="config-grid" style="margin-top: 2rem;">
+                <div class="config-card" style="grid-column: 1 / -1;">
+                    <h3 class="config-title"><i class="ph-fill ph-users-three" style="color: var(--blue-main);"></i> Gestión de Usuarios</h3>
+                    <p style="font-size: 0.9rem; color: var(--gray-500); margin-bottom: 1.5rem;">Crea perfiles para administradores o asesores asignando permisos y una contraseña inicial encriptada.</p>
+                    
+                    <form id="userCreationForm" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; background: var(--gray-50); padding: 1.5rem; border-radius: var(--radius-md); border: 1px solid var(--gray-200);">
+                        
+                        <div class="form-group">
+                            <label>Nombre del Colaborador</label>
+                            <input type="text" id="newUserName" required placeholder="Ej: Juan Pérez">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Correo Electrónico (Para Login)</label>
+                            <input type="email" id="newUserEmail" required placeholder="juan@clicksalud.com">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Contraseña Temporal</label>
+                            <input type="text" id="newUserPass" required placeholder="Se le pedirá que la cambie">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Módulos Permitidos (Mantén <kbd>Ctrl</kbd> para múltiples)</label>
+                            <select id="newUserModules" multiple required style="height: 80px;">
+                                <option value="gestion">Gestión (Tiquetes)</option>
+                                <option value="admin">Admin (Financiero)</option>
+                                <option value="sistemas">Sistemas (Configuración)</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group" style="grid-column: 1 / -1;">
+                            <label>Autorización de Trámites (Mantén <kbd>Ctrl</kbd> para múltiples)</label>
+                            <select id="newUserTramites" multiple style="height: 120px;">
+                                <option value="Afiliaciones y Traslados">Afiliaciones y Traslados</option>
+                                <option value="Pólizas y Planes de Salud">Pólizas y Planes de Salud</option>
+                                <option value="Agendamiento de Citas Especializadas">Agendamiento de Citas Especializadas</option>
+                                <option value="Gestión de Autorizaciones Médicas">Gestión de Autorizaciones Médicas</option>
+                                <option value="Reclamación de Medicamentos">Reclamación de Medicamentos</option>
+                                <option value="Asesoría Legal en Salud">Asesoría Legal en Salud</option>
+                            </select>
+                        </div>
+
+                        <div style="grid-column: 1 / -1;">
+                            <button type="submit" class="btn btn-primary" id="btnCreateUser">Crear Usuario y Encriptar Acceso</button>
+                            <div id="createUserRes" style="margin-top: 1rem; font-size: 0.9rem; font-weight: 500;"></div>
+                        </div>
+                    </form>
+                </div>
             </div>
 
         </div>
     </main>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="auth.js"></script>
     <script>
         // Restricción de acceso para el módulo 'sistemas'
         const currentUser = Auth.requireAuth('sistemas');
+
+        document.getElementById('userCreationForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('btnCreateUser');
+            const res = document.getElementById('createUserRes');
+            
+            const name = document.getElementById('newUserName').value;
+            const email = document.getElementById('newUserEmail').value;
+            const pass = document.getElementById('newUserPass').value;
+            
+            // Collect select multiples
+            const modulesSelect = document.getElementById('newUserModules');
+            const modulos = Array.from(modulesSelect.selectedOptions).map(o => o.value);
+            
+            const tramitesSelect = document.getElementById('newUserTramites');
+            const tramites = Array.from(tramitesSelect.selectedOptions).map(o => o.value);
+
+            btn.textContent = 'Procesando...';
+            btn.disabled = true;
+
+            try {
+                // Encriptar la contraseña (SHA-256)
+                const hashedPass = await Auth.hashPassword(pass);
+                
+                const payload = {
+                    email: email,
+                    password_hash: hashedPass,
+                    nombre: name,
+                    modulos: modulos, // It will be converted to JSON in Postgres
+                    tramites: tramites, // It will be converted to JSON in Postgres
+                    must_change_password: true // Exigir cambio!
+                };
+
+                const client = Auth.getClient();
+                if(!client) throw new Error("No hay conexión con la Base de datos principal.");
+
+                const { data, error } = await client.from('usuarios').insert([payload]);
+                
+                if(error) throw error;
+
+                res.innerHTML = `<span style="color: var(--green);"><i class="ph-bold ph-check-circle"></i> Usuario ${name} creado con éxito. Criptografía aplicada.</span>`;
+                e.target.reset();
+
+            } catch (err) {
+                res.innerHTML = `<span style="color: #ef4444;"><i class="ph-bold ph-warning-circle"></i> Error creando usuario. Asegúrese de que la tabla 'usuarios' existe en Supabase y que el email no está duplicado. (${err.message})</span>`;
+            }
+
+            btn.textContent = 'Crear Usuario y Encriptar Acceso';
+            btn.disabled = false;
+        });
     </script>
 </body>
 </html>
