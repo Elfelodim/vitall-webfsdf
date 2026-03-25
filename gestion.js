@@ -137,11 +137,25 @@ function renderTabla(lista) {
     lista.forEach(ticket => {
         let documentoHTML = `<span style="color: #94a3b8;">Sin adjunto</span>`;
         if (ticket.archivo_url) {
-            documentoHTML = `
-                <a href="${ticket.archivo_url}" target="_blank" class="btn btn-primary-outline" style="padding: 0.3rem 0.8rem; font-size: 0.8rem;">
-                    <i class="ph-bold ph-download-simple"></i> Ver PDF
-                </a>
-            `;
+            const urls = ticket.archivo_url.split(',');
+            if(urls.length === 1) {
+                documentoHTML = `
+                    <a href="${urls[0]}" target="_blank" class="btn btn-primary-outline" style="padding: 0.3rem 0.8rem; font-size: 0.8rem; text-decoration: none;">
+                        <i class="ph-bold ph-download-simple"></i> Ver PDF
+                    </a>
+                `;
+            } else {
+                // Hay múltiples archivos
+                documentoHTML = `<div style="display: flex; flex-direction: column; gap: 0.3rem;">`;
+                urls.forEach((url, idx) => {
+                    documentoHTML += `
+                        <a href="${url.trim()}" target="_blank" style="color: var(--blue-main); font-size: 0.8rem; text-decoration: underline; display: flex; align-items: center; gap: 0.2rem;">
+                            <i class="ph-fill ph-file-pdf"></i> Doc ${idx + 1}
+                        </a>
+                    `;
+                });
+                documentoHTML += `</div>`;
+            }
         }
 
         const estadoActual = ticket.estado || 'Pendiente';

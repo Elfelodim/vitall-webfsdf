@@ -147,9 +147,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         function handleFiles(files) {
             if (files.length > 0) {
-                const fileName = files[0].name;
-                fileNameDisplay.textContent = `Archivo seleccionado: ${fileName}`;
-                fileMsg.textContent = "Haz clic para cambiar el archivo";
+                if(files.length === 1) {
+                    fileNameDisplay.textContent = `1 archivo seleccionado: ${files[0].name}`;
+                } else {
+                    fileNameDisplay.textContent = `${files.length} archivos seleccionados listos para enviar.`;
+                }
+                fileMsg.textContent = "Haz clic o arrastra más para cambiarlos";
             }
         }
     }
@@ -180,33 +183,36 @@ document.addEventListener('DOMContentLoaded', () => {
                 const serviceType = document.getElementById('serviceType').value;
                 const observations = document.getElementById('observations').value || 'Ninguna';
                 
-                let fileUrl = null;
+                let fileUrls = [];
                 const fileInput = document.getElementById('fileUpload');
-                const selectedFile = fileInput.files[0];
 
-                if (selectedFile) {
-                    submitBtn.textContent = 'Subiendo documento...';
+                if (fileInput.files.length > 0) {
+                    submitBtn.textContent = 'Subiendo documentos...';
                     
-                    const fileExt = selectedFile.name.split('.').pop();
-                    const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
-                    const filePath = `solicitudes/${fileName}`;
+                    for (let selectedFile of fileInput.files) {
+                        const fileExt = selectedFile.name.split('.').pop();
+                        const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+                        const filePath = `solicitudes/${fileName}`;
 
-                    // Upload file to Supabase Storage
-                    const { data: uploadData, error: uploadError } = await supabaseClient
-                        .storage
-                        .from('documentos')
-                        .upload(filePath, selectedFile);
-                    
-                    if (uploadError) throw uploadError;
-
-                    // Get public URL
-                    const { data: publicUrlData } = supabaseClient
-                        .storage
-                        .from('documentos')
-                        .getPublicUrl(filePath);
+                        // Upload file to Supabase Storage
+                        const { data: uploadData, error: uploadError } = await supabaseClient
+                            .storage
+                            .from('documentos')
+                            .upload(filePath, selectedFile);
                         
-                    fileUrl = publicUrlData.publicUrl;
+                        if (uploadError) throw uploadError;
+
+                        // Get public URL
+                        const { data: publicUrlData } = supabaseClient
+                            .storage
+                            .from('documentos')
+                            .getPublicUrl(filePath);
+                            
+                        fileUrls.push(publicUrlData.publicUrl);
+                    }
                 }
+
+                const finalFileUrl = fileUrls.length > 0 ? fileUrls.join(',') : null;
 
                 submitBtn.textContent = 'Guardando registro...';
                 
@@ -218,7 +224,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             nombre_completo: fullName, 
                             telefono: phone, 
                             tipo_tramite: serviceType,
-                            archivo_url: fileUrl,
+                            archivo_url: finalFileUrl,
                             observaciones: observations,
                             consentimiento_datos: true
                         }
