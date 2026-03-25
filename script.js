@@ -3,16 +3,22 @@
 // ==========================================
 // REGISTRO DE VISITAS A LA LANDING PAGE
 // ==========================================
+const supabaseUrlGlobal = 'https://zdmiylgzioarginxrmbd.supabase.co';
+const supabaseKeyGlobal = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpkbWl5bGd6aW9hcmdpbnhybWJkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE1MDAzNzIsImV4cCI6MjA4NzA3NjM3Mn0.xHFSB1pJYB28rMUH57YrOyMNWPwfNh_PXNigHwVSqRM';
+
 document.addEventListener('DOMContentLoaded', async () => {
+    // Inicializar cliente localmente para este bloque
+    const supabase = window.supabase.createClient(supabaseUrlGlobal, supabaseKeyGlobal);
+
     // Solo contar 1 visita por sesión del navegador
-    if(!sessionStorage.getItem('visited_clicksalud_hoy') && window.supabaseClient) {
+    if(!sessionStorage.getItem('visited_clicksalud_hoy')) {
         sessionStorage.setItem('visited_clicksalud_hoy', '1');
         try {
             // Obtener contador actual
-            const { data: stats } = await window.supabaseClient.from('estadisticas').select('contador').eq('id', 1).single();
+            const { data: stats } = await supabase.from('estadisticas').select('contador').eq('id', 1).single();
             if(stats) {
                 // Sumar 1
-                await window.supabaseClient.from('estadisticas').update({contador: stats.contador + 1}).eq('id', 1);
+                await supabase.from('estadisticas').update({contador: stats.contador + 1}).eq('id', 1);
             }
         } catch(e) {
             console.log("No se pudo registrar la visita. Asegúrate de haber ejecutado el SQL de la tabla 'estadisticas'.");
