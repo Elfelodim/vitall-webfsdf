@@ -354,7 +354,8 @@
                         if(cat.includes('Legal')) abreviado = 'Legal';
 
                         chartContainer.innerHTML += `
-                            <div class="chart-bar" style="height: ${height}%;" title="${cat}: ${val}">
+                            <div class="chart-bar" style="height: ${height}%; position: relative;" title="${cat}: ${val}">
+                                <div style="position: absolute; top: -25px; left: 50%; transform: translateX(-50%); font-weight: bold; font-size: 0.9rem; color: var(--blue-dark);">${val}</div>
                                 <span title="${cat}">${abreviado}</span>
                             </div>
                         `;
