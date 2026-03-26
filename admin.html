@@ -410,9 +410,8 @@
 
                     chartContainer.innerHTML += `
                         <div class="chart-bar" style="height: ${height}%; position: relative;" title="${cat}: ${val} casos (${percent}%)">
-                            <div style="position: absolute; top: -25px; left: 50%; transform: translateX(-50%); font-weight: bold; font-size: 0.85rem; color: var(--blue-dark); white-space: nowrap;">
-                                ${val} <span style="font-size: 0.7rem; color: var(--gray-500); font-weight: normal;">(${percent}%)</span>
-                            </div>
+                            <div style="position: absolute; top: -22px; left: 0; width: 100%; text-align: center; font-weight: bold; font-size: 0.9rem; color: var(--blue-dark);">${val}</div>
+                            <div style="position: absolute; top: 6px; left: 0; width: 100%; text-align: center; font-weight: bold; font-size: 0.7rem; color: white;">${percent}%</div>
                             <span title="${cat}">${abreviado}</span>
                         </div>
                     `;
