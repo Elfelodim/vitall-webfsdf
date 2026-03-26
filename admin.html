@@ -226,103 +226,59 @@
 
     <main class="dashboard-container">
         <div class="container">
-            <h2 class="section-title text-left" style="margin-bottom: 0.5rem;">Tablero Financiero</h2>
-            <p class="text-gray-500" style="margin-bottom: 2rem;">Resumen de contabilidad e indicadores de la empresa en tiempo real.</p>
+            <h2 class="section-title text-left" style="margin-bottom: 0.5rem;">Resumen Estadístico Operativo</h2>
+            <p class="text-gray-500" style="margin-bottom: 2rem;">Indicadores y volumen de trámites extraídos en tiempo real de la gestión general.</p>
 
-            <!-- KPI Cards -->
-            <div class="kpi-grid">
+            <!-- KPI Cards Dinámicos -->
+            <div class="kpi-grid" id="kpiContainer">
                 <div class="kpi-card">
                     <div class="kpi-card-header">
-                        <span>Ingresos Mensuales</span>
-                        <i class="ph ph-currency-dollar kpi-icon"></i>
-                    </div>
-                    <div class="kpi-value">$15.2M</div>
-                    <div class="kpi-trend trend-up"><i class="ph-bold ph-trend-up"></i> +12.5% vs mes anterior</div>
-                </div>
-
-                <div class="kpi-card">
-                    <div class="kpi-card-header">
-                        <span>Gastos Operativos</span>
-                        <i class="ph ph-wallet kpi-icon"></i>
-                    </div>
-                    <div class="kpi-value">$4.1M</div>
-                    <div class="kpi-trend trend-down"><i class="ph-bold ph-trend-down"></i> -2.4% vs mes anterior</div>
-                </div>
-
-                <div class="kpi-card">
-                    <div class="kpi-card-header">
-                        <span>Trámites Facturados</span>
+                        <span>Total Trámites Recibidos</span>
                         <i class="ph ph-file-text kpi-icon"></i>
                     </div>
-                    <div class="kpi-value">142</div>
-                    <div class="kpi-trend trend-up"><i class="ph-bold ph-trend-up"></i> +18 nuevos esta semana</div>
+                    <div class="kpi-value" id="kpiTotal">...</div>
+                    <div class="kpi-trend trend-up"><i class="ph-bold ph-clock"></i> <span id="kpiTotalLabel">Desde siempre</span></div>
                 </div>
 
                 <div class="kpi-card">
                     <div class="kpi-card-header">
-                        <span>Margen Neto</span>
-                        <i class="ph ph-chart-line-up kpi-icon"></i>
+                        <span>Casos Abiertos (En Proceso)</span>
+                        <i class="ph ph-hourglass kpi-icon" style="color: #eab308; background: #fef9c3;"></i>
                     </div>
-                    <div class="kpi-value">73%</div>
-                    <div class="kpi-trend trend-up"><i class="ph-bold ph-trend-up"></i> Estable</div>
+                    <div class="kpi-value" id="kpiAbiertos">...</div>
+                    <div class="kpi-trend trend-down"><i class="ph-bold ph-warning"></i> Solicitan gestión</div>
+                </div>
+
+                <div class="kpi-card">
+                    <div class="kpi-card-header">
+                        <span>Casos Finalizados</span>
+                        <i class="ph ph-check-circle kpi-icon" style="color: #22c55e; background: #dcfce7;"></i>
+                    </div>
+                    <div class="kpi-value" id="kpiCerrados">...</div>
+                    <div class="kpi-trend trend-up"><i class="ph-bold ph-trend-up"></i> Casos exitosos</div>
                 </div>
             </div>
 
             <!-- Main Sections -->
             <div class="dashboard-sections">
-                <!-- Gráfico Mockup -->
+                <!-- Gráfico de distribución de servicios -->
                 <div class="dashboard-panel">
-                    <h3 class="panel-title"><i class="ph-fill ph-chart-bar" style="color: var(--blue-main);"></i> Proyección de Ingresos vs Egresos</h3>
+                    <h3 class="panel-title"><i class="ph-fill ph-chart-bar" style="color: var(--blue-main);"></i> Trámites más solicitados</h3>
                     
-                    <!-- Este es un gráfico de demostración hecho con CSS puro -->
-                    <div class="chart-mockup">
-                        <div class="chart-bar" style="height: 40%;" title="Ene"><span title="Enero">Ene</span></div>
-                        <div class="chart-bar" style="height: 55%;" title="Feb"><span title="Febrero">Feb</span></div>
-                        <div class="chart-bar" style="height: 45%;" title="Mar"><span title="Marzo">Mar</span></div>
-                        <div class="chart-bar" style="height: 70%;" title="Abr"><span title="Abril">Abr</span></div>
-                        <div class="chart-bar" style="height: 65%;" title="May"><span title="Mayo">May</span></div>
-                        <div class="chart-bar" style="height: 85%;" title="Jun"><span title="Junio">Jun</span></div>
+                    <div class="chart-mockup" id="barChartContainer" style="align-items: flex-end; padding-top: 2rem;">
+                        <i class="ph ph-spinner ph-spin text-gray-400" style="font-size: 2rem; margin: auto;"></i>
                     </div>
-                    <div style="text-align: center; margin-top: 2rem; font-size: 0.85rem; color: var(--gray-500);">
-                        *Datos de demostración. Próximamente integración con ERP.
+                    <div style="text-align: center; margin-top: 1rem; font-size: 0.85rem; color: var(--gray-500);">
+                        Distribución de casos por categoría.
                     </div>
                 </div>
 
-                <!-- Lista Reciente -->
+                <!-- Lista de Última Actividad (Recientes) -->
                 <div class="dashboard-panel">
-                    <h3 class="panel-title"><i class="ph-fill ph-file-invoice" style="color: var(--green);"></i> Últimos Movimientos</h3>
-                    
-                    <ul class="admin-list">
-                        <li>
-                            <div class="item-info">
-                                <strong>Tutela Aprobada - EPS Sura</strong>
-                                <span>Hace 2 horas</span>
-                            </div>
-                            <span style="color: var(--green); font-weight: 600;">+$350.000</span>
-                        </li>
-                        <li>
-                            <div class="item-info">
-                                <strong>Pago Nómina Asesores</strong>
-                                <span>Ayer, 08:30 AM</span>
-                            </div>
-                            <span style="color: #ef4444; font-weight: 600;">-$1.200.000</span>
-                        </li>
-                        <li>
-                            <div class="item-info">
-                                <strong>Afiliación Independiente</strong>
-                                <span>Ayer, 04:15 PM</span>
-                            </div>
-                            <span style="color: var(--green); font-weight: 600;">+$80.000</span>
-                        </li>
-                        <li>
-                            <div class="item-info">
-                                <strong>Renovación Software (Suscripción)</strong>
-                                <span>Hace 3 días</span>
-                            </div>
-                            <span style="color: #ef4444; font-weight: 600;">-$150.000</span>
-                        </li>
-                        <li>
-                            <button class="btn btn-primary-outline btn-block" style="padding: 0.5rem; margin-top: 1rem;">Ver libro diario</button>
+                    <h3 class="panel-title"><i class="ph-fill ph-clock-counter-clockwise" style="color: var(--green);"></i> Últimas Solicitudes Recibidas</h3>
+                    <ul class="admin-list" id="ultimosMovimientos">
+                        <li style="justify-content: center; padding: 2rem;">
+                            <i class="ph ph-spinner ph-spin text-gray-400" style="font-size: 2rem;"></i>
                         </li>
                     </ul>
                 </div>
@@ -335,6 +291,109 @@
     <script>
         // Restricción de acceso para el módulo 'admin'
         const currentUser = Auth.requireAuth('admin');
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const client = Auth.getClient();
+
+            try {
+                // Fetch all tickets to calculate KPIs
+                // Nota: Para grandes volúmenes de datos se recomienda usar RPCs o count() de Supabase
+                const { data: tickets, error } = await client
+                    .from('clientes')
+                    .select('estado, tipo_tramite, created_at, nombre_completo, id')
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+
+                // kPI Calculations
+                const total = tickets.length;
+                let abiertos = 0;
+                let cerrados = 0;
+                
+                const contadoresTramites = {};
+
+                tickets.forEach(t => {
+                    const est = t.estado || 'Pendiente';
+                    if (est === 'Gestionado' || est === 'Rechazado') {
+                        cerrados++;
+                    } else {
+                        abiertos++;
+                    }
+
+                    // Frecuencia de categorías
+                    const cat = t.tipo_tramite || 'Otros';
+                    contadoresTramites[cat] = (contadoresTramites[cat] || 0) + 1;
+                });
+
+                document.getElementById('kpiTotal').textContent = total;
+                document.getElementById('kpiAbiertos').textContent = abiertos;
+                document.getElementById('kpiCerrados').textContent = cerrados;
+
+                // Render Chart
+                const chartContainer = document.getElementById('barChartContainer');
+                chartContainer.innerHTML = '';
+                
+                // Ordenar por valor
+                const entradasSorted = Object.entries(contadoresTramites).sort((a,b) => b[1] - a[1]).slice(0, 5); // top 5
+                
+                if(entradasSorted.length === 0) {
+                    chartContainer.innerHTML = '<span class="text-gray-500">No hay datos</span>';
+                } else {
+                    const maxVal = entradasSorted[0][1];
+                    entradasSorted.forEach(([cat, val]) => {
+                        const height = Math.max((val / maxVal) * 100, 15);
+                        let abreviado = cat.substring(0, 5);
+                        if(cat.includes('Polizas')) abreviado = 'Póliz';
+                        if(cat.includes('Afiliaciones')) abreviado = 'Afil';
+                        if(cat.includes('Agendamiento')) abreviado = 'Citas';
+                        if(cat.includes('Autorizaciones')) abreviado = 'Autor';
+                        if(cat.includes('Reclam')) abreviado = 'Medic';
+                        if(cat.includes('Legal')) abreviado = 'Legal';
+
+                        chartContainer.innerHTML += `
+                            <div class="chart-bar" style="height: ${height}%;" title="${cat}: ${val}">
+                                <span title="${cat}">${abreviado}</span>
+                            </div>
+                        `;
+                    });
+                }
+
+                // Render List
+                const listContainer = document.getElementById('ultimosMovimientos');
+                listContainer.innerHTML = '';
+                
+                const recents = tickets.slice(0, 5);
+                if (recents.length === 0) {
+                    listContainer.innerHTML = '<li class="text-gray-500">No hay registros recientes</li>';
+                }
+
+                recents.forEach(t => {
+                    const dateObj = new Date(t.created_at);
+                    const isToday = new Date().toDateString() === dateObj.toDateString();
+                    const dateStr = isToday ? dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : dateObj.toLocaleDateString();
+                    
+                    let estadoColor = 'var(--gray-500)';
+                    const est = t.estado || 'Pendiente';
+                    if(est === 'Pendiente') estadoColor = '#eab308';
+                    if(est === 'Gestionado') estadoColor = '#22c55e';
+                    if(est === 'Rechazado') estadoColor = '#ef4444';
+
+                    listContainer.innerHTML += `
+                        <li>
+                            <div class="item-info">
+                                <strong>${t.tipo_tramite || 'Trámite Web'} - ${t.nombre_completo}</strong>
+                                <span>Llegó: ${dateStr}</span>
+                            </div>
+                            <span style="color: ${estadoColor}; font-weight: 600; font-size: 0.85rem;">${est}</span>
+                        </li>
+                    `;
+                });
+
+            } catch (err) {
+                console.error("Error cargando el dashboard:", err);
+                document.getElementById('kpiContainer').innerHTML = `<p class="text-gray-500">Error conectando a la base de datos.</p>`;
+            }
+        });
     </script>
 </body>
 </html>
