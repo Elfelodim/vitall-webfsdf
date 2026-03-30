@@ -30,7 +30,7 @@ async function cargarTickets() {
     // Mostramos estado de carga
     tbody.innerHTML = `
         <tr>
-            <td colspan="6" class="loading-state">
+            <td colspan="7" class="loading-state">
                 <i class="ph ph-spinner ph-spin" style="font-size: 2rem; color: var(--green); margin-bottom: 1rem;"></i>
                 <p>Cargando información fresca de la base de datos...</p>
             </td>
@@ -107,7 +107,7 @@ async function cargarTickets() {
         console.error("Error cargando los tickets:", error);
         tbody.innerHTML = `
             <tr>
-                <td colspan="6" class="loading-state" style="color: #ef4444;">
+                <td colspan="7" class="loading-state" style="color: #ef4444;">
                     <i class="ph-fill ph-warning-circle" style="font-size: 2rem; margin-bottom: 1rem;"></i>
                     <p>Ocurrió un error al cargar los datos: ${error.message}</p>
                 </td>
@@ -124,7 +124,7 @@ function renderTabla(lista) {
     if (lista.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="6" class="loading-state">
+                <td colspan="7" class="loading-state">
                     <p>No se encontraron resultados o registros.</p>
                 </td>
             </tr>
@@ -211,6 +211,7 @@ function renderTabla(lista) {
                 </a>
             </td>
             <td><span class="badge-type">${ticket.tipo_tramite}</span></td>
+            <td><div style="max-width: 250px; font-size: 0.85rem; color: var(--gray-600); line-height: 1.4; word-wrap: break-word; white-space: normal; overflow-wrap: break-word;">${ticket.observaciones || '<span style="color:#cbd5e1;font-style:italic;">Sin observación</span>'}</div></td>
             <td>${estadoHTML}</td>
             <td>${documentoHTML}</td>
         `;
