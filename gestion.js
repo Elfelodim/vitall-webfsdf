@@ -58,7 +58,7 @@ async function cargarTickets() {
 
         // Actualizar UI Contador Visitas
         const contadorSpan = document.getElementById('contadorVisitasTotal');
-        if(contadorSpan && statsResponse.data) {
+        if(contadorSpan && statsResponse.data && statsResponse.data.contador !== null) {
             contadorSpan.textContent = statsResponse.data.contador;
         } else if (contadorSpan) {
             contadorSpan.textContent = '0';

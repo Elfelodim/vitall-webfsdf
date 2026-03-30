@@ -19,8 +19,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             if(selectErr) throw selectErr;
 
             if(stats) {
-                // Sumar 1
-                const { error: updErr } = await supabase.from('estadisticas').update({contador: stats.contador + 1}).eq('id', 1);
+                // Sumar 1 (protegiendo en caso de ser nulo por primera vez)
+                const valorActual = stats.contador !== null ? stats.contador : 0;
+                const { error: updErr } = await supabase.from('estadisticas').update({contador: valorActual + 1}).eq('id', 1);
                 if (updErr) throw updErr;
                 
                 // Solo marcar como visitado si logró sumar en DB
