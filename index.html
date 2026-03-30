@@ -246,7 +246,7 @@
 
                             <label style="display: flex; gap: 0.8rem; align-items: center; background: white; padding: 1rem; border: 2px solid var(--gray-200); border-radius: var(--radius-md); cursor: pointer; transition: all 0.2s;" id="acceptDataLabel">
                                 <input type="checkbox" id="acceptDataCheck" style="min-width: 20px; width: 20px; height: 20px; accent-color: var(--green); cursor: pointer;">
-                                <span style="font-size: 0.85rem; font-weight: 600; color: var(--gray-800); line-height: 1.3;" data-i18n="form.dp.check">Acepto los términos y autorizo el tratamiento de mis datos personales para continuar.</span>
+                                <span style="font-size: 0.85rem; font-weight: 600; color: var(--gray-800); line-height: 1.3;" data-i18n="form.dp.check">Acepto los <a href="#" onclick="document.getElementById('termsModal').style.display='flex'; return false;" style="text-decoration: underline; color: var(--blue-main);">términos y condiciones</a> y autorizo el tratamiento de mis datos personales para continuar.</span>
                             </label>
                         </div>
 
@@ -365,6 +365,47 @@
         <i class="ph-fill ph-whatsapp-logo"></i>
         <span class="whatsapp-tooltip">¿Te ayudamos?</span>
     </a>
+
+    <!-- Modal Términos y Condiciones -->
+    <div id="termsModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 9999; justify-content: center; align-items: center; padding: 1rem; backdrop-filter: blur(4px);">
+        <div style="background: white; border-radius: var(--radius-lg); max-width: 700px; width: 100%; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: var(--shadow-xl);">
+            <div style="padding: 1.5rem; background: var(--gray-50); border-bottom: 1px solid var(--gray-200); display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="margin: 0; font-size: 1.2rem; color: var(--blue-dark); display: flex; align-items: center; gap: 0.5rem;"><i class="ph-fill ph-file-text"></i> Términos y Condiciones</h3>
+                <button onclick="document.getElementById('termsModal').style.display='none'" style="background: transparent; border: none; cursor: pointer; font-size: 1.5rem; color: var(--gray-500);"><i class="ph ph-x"></i></button>
+            </div>
+            <div style="padding: 2rem; overflow-y: auto; font-size: 0.95rem; color: var(--gray-700); line-height: 1.6;">
+                <p style="text-align: center; margin-bottom: 2rem;"><strong>TÉRMINOS Y CONDICIONES DE SERVICIO – CLICK-SALUD ASESORÍAS</strong><br>
+                El presente documento regula la relación contractual entre el usuario (en adelante, "EL CLIENTE") y la sociedad JAC ASESORÍAS INTEGRALES S.A.S. (en adelante, "LA EMPRESA"), identificada con el NIT que se asigne, titular del portal web www.click-salud.com.</p>
+                
+                <h4 style="color: var(--blue-dark); margin-bottom: 0.5rem; font-size: 1.05rem;"><i class="ph-bold ph-caret-right text-green"></i> 1. Naturaleza del Servicio</h4>
+                <p style="margin-bottom: 1.5rem;">LA EMPRESA presta servicios de asesoría técnica y administrativa en el marco del Sistema General de Seguridad Social en Salud (SGSSS) de Colombia. <br>
+                <em style="color: #ef4444; font-weight: 500; display: block; margin-top: 0.5rem;">Nota Importante: Bajo ninguna circunstancia CLICK-SALUD ASESORÍAS presta servicios médicos, diagnósticos, tratamientos o urgencias. Nuestra labor es estrictamente administrativa y de orientación legal.</em></p>
+                
+                <h4 style="color: var(--blue-dark); margin-bottom: 0.5rem; font-size: 1.05rem;"><i class="ph-bold ph-caret-right text-green"></i> 2. Alcance en Acciones de Tutela y Trámites Judiciales</h4>
+                <p style="margin-bottom: 0.5rem;">En los casos donde EL CLIENTE contrate la elaboración de Acciones de Tutela, incidentes de desacato o recursos administrativos, se aplicarán las siguientes reglas:</p>
+                <ul style="margin-bottom: 1.5rem; padding-left: 1.5rem;">
+                    <li style="margin-bottom: 0.5rem;"><strong>Garantía de Gestión:</strong> LA EMPRESA garantiza que la elaboración de los documentos y la estrategia jurídica se realizarán con la mayor diligencia técnica, profesional y conforme a la jurisprudencia vigente.</li>
+                    <li style="margin-bottom: 0.5rem;"><strong>Inexistencia de Garantía de Resultado:</strong> EL CLIENTE declara comprender que la Acción de Tutela es un mecanismo judicial cuya decisión final depende única y exclusivamente de la autonomía y discrecionalidad de los Jueces de la República.</li>
+                    <li><strong>Sobre el Fallo:</strong> Por lo tanto, LA EMPRESA no garantiza el sentido del fallo (favorable o desfavorable). Nuestra obligación es de medio (realizar la mejor gestión posible) y no de resultado (asegurar que el juez ordene lo solicitado).</li>
+                </ul>
+                
+                <h4 style="color: var(--blue-dark); margin-bottom: 0.5rem; font-size: 1.05rem;"><i class="ph-bold ph-caret-right text-green"></i> 3. Responsabilidad del Usuario</h4>
+                <p style="margin-bottom: 1.5rem;">EL CLIENTE se compromete a entregar información veraz, completa y oportuna sobre su situación médica y administrativa. LA EMPRESA no se hace responsable por fallos adversos derivados de la ocultación de información o la falsedad en los documentos entregados por EL CLIENTE.</p>
+
+                <h4 style="color: var(--blue-dark); margin-bottom: 0.5rem; font-size: 1.05rem;"><i class="ph-bold ph-caret-right text-green"></i> 4. Tratamiento de Datos Personales (Habeas Data)</h4>
+                <p style="margin-bottom: 1.5rem;">Al aceptar estos términos, EL CLIENTE autoriza a JAC ASESORÍAS INTEGRALES S.A.S. a tratar sus datos personales y documentos médicos sensibles exclusivamente para la gestión de su asesoría, conforme a la Ley 1581 de 2012. Los datos no serán compartidos con terceros sin autorización expresa, salvo requerimiento judicial.</p>
+
+                <h4 style="color: var(--blue-dark); margin-bottom: 0.5rem; font-size: 1.05rem;"><i class="ph-bold ph-caret-right text-green"></i> 5. Pagos y Honorarios</h4>
+                <p style="margin-bottom: 1.5rem;">Los honorarios por concepto de asesoría se pactarán de manera previa y no están sujetos al éxito de la gestión judicial, salvo que se pacte expresamente una cuota litis o de éxito adicional, sin que esto anule la cláusula de discrecionalidad judicial mencionada en el punto 2.</p>
+
+                <h4 style="color: var(--blue-dark); margin-bottom: 0.5rem; font-size: 1.05rem;"><i class="ph-bold ph-caret-right text-green"></i> 6. Propiedad Intelectual</h4>
+                <p>Todo el contenido, diseño y código del portal www.click-salud.com es propiedad exclusiva de JAC ASESORÍAS INTEGRALES S.A.S. Queda prohibida su reproducción total o parcial sin autorización.</p>
+            </div>
+            <div style="padding: 1rem 1.5rem; background: var(--gray-50); border-top: 1px solid var(--gray-200); text-align: right;">
+                <button onclick="document.getElementById('termsModal').style.display='none'; document.getElementById('acceptDataCheck').checked=true; document.getElementById('acceptDataCheck').dispatchEvent(new Event('change'));" class="btn btn-primary" style="padding: 0.6rem 1.5rem;">Entendido y Acepto los Términos</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
