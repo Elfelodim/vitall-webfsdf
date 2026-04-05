@@ -9,8 +9,8 @@ const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
 function formatearFecha(fechaIso) {
     const fecha = new Date(fechaIso);
     return fecha.toLocaleDateString('es-CO', {
-        day: '2-digit', 
-        month: 'short', 
+        day: '2-digit',
+        month: 'short',
         year: 'numeric',
         hour: '2-digit',
         minute: '2-digit'
@@ -23,10 +23,10 @@ window.todosLosTickets = [];
 // 3. Función principal para extraer los datos de la base de datos
 async function cargarTickets() {
     const user = Auth.requireAuth('gestion');
-    if(!user) return;
+    if (!user) return;
 
     const tbody = document.getElementById('ticketsTabla');
-    
+
     // Mostramos estado de carga
     tbody.innerHTML = `
         <tr>
@@ -43,7 +43,7 @@ async function cargarTickets() {
             .from('clientes')
             .select('*')
             .order('created_at', { ascending: false });
-        
+
         const fetchStats = supabaseClient
             .from('estadisticas')
             .select('contador')
@@ -53,12 +53,12 @@ async function cargarTickets() {
         const [ticketsResponse, statsResponse] = await Promise.all([fetchTickets, fetchStats]);
 
         if (ticketsResponse.error) throw ticketsResponse.error;
-        
+
         let tickets = ticketsResponse.data;
 
         // Actualizar UI Contador Visitas
         const contadorSpan = document.getElementById('contadorVisitasTotal');
-        if(contadorSpan && statsResponse.data && statsResponse.data.contador !== null) {
+        if (contadorSpan && statsResponse.data && statsResponse.data.contador !== null) {
             contadorSpan.textContent = statsResponse.data.contador;
         } else if (contadorSpan) {
             contadorSpan.textContent = '0';
@@ -73,22 +73,19 @@ async function cargarTickets() {
             // 'otro' podría verse por cualquier admin, pero dejémoslo libre si queremos
         };
 
-        // Filtramos por permisos (Dependiendo del rol del usuario en auth.js)
-        if(user && user.tramites) {
+        // Filtramos por permisos (Los admins ven todo, los asesores solo sus trámites asignados)
+        if (user && user.tramites && !user.modulos.includes('admin')) {
             tickets = tickets.filter(ticket => {
                 const tramite = ticket.tipo_tramite;
                 // Si el trámite coincide directamente con los nuevos nombres
                 if (user.tramites.includes(tramite)) return true;
-                
+
                 // Si el trámite es un texto antiguo ("tutela", "cita"), ver si el usuario tiene permiso para la categoría equivalente
                 for (let permisoNuevo of user.tramites) {
-                    if(equivalenciasAntiguas[permisoNuevo] && equivalenciasAntiguas[permisoNuevo].includes(tramite)) {
+                    if (equivalenciasAntiguas[permisoNuevo] && equivalenciasAntiguas[permisoNuevo].includes(tramite)) {
                         return true;
                     }
                 }
-                
-                // Dejar ver los de "otro" solo si es admin
-                if(tramite === 'otro' && user.modulos.includes('admin')) return true;
 
                 return false;
             });
@@ -96,7 +93,7 @@ async function cargarTickets() {
 
         // Guardamos los tickets obtenidos en la variable global
         window.todosLosTickets = tickets;
-        
+
         // Llenamos el select de trámites de acuerdo a los permisos
         llenarFiltroTramites(user.tramites);
 
@@ -113,7 +110,7 @@ async function cargarTickets() {
                 </td>
             </tr>
         `;
-        }
+    }
 }
 
 // 4. Función encargada de dibujar la tabla dado un arreglo de tickets
@@ -138,7 +135,7 @@ function renderTabla(lista) {
         let documentoHTML = `<span style="color: #94a3b8;">Sin adjunto</span>`;
         if (ticket.archivo_url) {
             const urls = ticket.archivo_url.split(',');
-            if(urls.length === 1) {
+            if (urls.length === 1) {
                 documentoHTML = `
                     <a href="${urls[0]}" target="_blank" class="btn btn-primary-outline" style="padding: 0.3rem 0.8rem; font-size: 0.8rem; text-decoration: none;">
                         <i class="ph-bold ph-download-simple"></i> Ver PDF
@@ -162,11 +159,11 @@ function renderTabla(lista) {
         const fechaTicket = new Date(ticket.created_at);
         const diffTime = Math.abs(ahora - fechaTicket);
         const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
-        
+
         let colorSemaforo = '#22c55e';
         if (diffDays === 2) colorSemaforo = '#eab308';
         if (diffDays >= 3) colorSemaforo = '#ef4444';
-        
+
         let textoTiempo = diffDays === 1 ? '1 día (Hoy)' : `${diffDays} días`;
 
         // Apagar / Detener semáforo si el ticket ya no requiere gestión
@@ -201,7 +198,7 @@ function renderTabla(lista) {
 
         const tr = document.createElement('tr');
         if (alertClass) tr.classList.add(alertClass);
-        
+
         tr.innerHTML = `
             <td style="color: #64748b; font-size: 0.85rem;">${formatearFecha(ticket.created_at)}</td>
             <td class="td-name">
@@ -231,14 +228,14 @@ async function cambiarEstado(ticketId, nuevoEstado) {
             .eq('id', ticketId);
 
         if (error) throw error;
-        
+
         // Actualizamos localmente para no tener que recargar todo
         const elTicket = window.todosLosTickets.find(t => String(t.id) === String(ticketId));
         if (elTicket) elTicket.estado = nuevoEstado;
-        
+
         // Refrescamos vista
         aplicarFiltrosLocales();
-        
+
     } catch (error) {
         console.error('Error actualizando estado:', error);
         alert('Hubo un error al cambiar el estado. Intenta de nuevo.');
@@ -249,12 +246,12 @@ async function cambiarEstado(ticketId, nuevoEstado) {
 // 6. Funcionalidades de Filtros
 function llenarFiltroTramites(tramitesAutorizados) {
     const selector = document.getElementById('filterTramite');
-    if(!selector) return;
-    
+    if (!selector) return;
+
     // Dejar la opcion "Todos"
     selector.innerHTML = '<option value="todos">Todos los trámites</option>';
-    
-    if(tramitesAutorizados) {
+
+    if (tramitesAutorizados) {
         tramitesAutorizados.forEach(t => {
             const opt = document.createElement('option');
             opt.value = t;
@@ -266,36 +263,36 @@ function llenarFiltroTramites(tramitesAutorizados) {
 
 function aplicarFiltrosLocales() {
     let listData = window.todosLosTickets;
-    
+
     // Obtener valores de los inputs
     const textSearch = (document.getElementById('filterSearch')?.value || '').toLowerCase();
     const tramiteSelect = document.getElementById('filterTramite')?.value || 'todos';
     const estadoSelect = document.getElementById('filterEstado')?.value || 'todos';
 
     // Aplicar Filtro 1: Buscador Libre (Nombre o teléfono)
-    if(textSearch) {
-        listData = listData.filter(t => 
+    if (textSearch) {
+        listData = listData.filter(t =>
             (t.nombre_completo && t.nombre_completo.toLowerCase().includes(textSearch)) ||
             (t.telefono && t.telefono.includes(textSearch))
         );
     }
-    
+
     // Aplicar Filtro 2: Trámite
-    if(tramiteSelect !== 'todos') {
+    if (tramiteSelect !== 'todos') {
         listData = listData.filter(t => t.tipo_tramite === tramiteSelect);
     }
-    
+
     // Aplicar Filtro 3: Estado
     /* Los estados en el select son: pendiente, en_gestion, etc (algunos con mayusculas). 
        Vamos a comparar unicamente asumiendo los string literales que asignamos al select o ignorando cases. */
-    if(estadoSelect !== 'todos') {
+    if (estadoSelect !== 'todos') {
         // En el HTML, los option tienen values: recibido, revision, aprobado, pendiente_documento, rechazado.
         // Pero en la base de datos se guardan como en el select-estado literal ('Pendiente', 'En Gestión').
         // Ah, he visto que el HTML decia recibido/revision pero mi select estado usa Pendiente / En Gestión.
         // Convertiré ambos a minusculas y buscaré substring para mayor robustez
         listData = listData.filter(t => {
             const tEstado = (t.estado || 'Pendiente').toLowerCase();
-            return tEstado.includes(estadoSelect.substring(0,4)); // e.g., 'pend', 'en g', etc.
+            return tEstado.includes(estadoSelect.substring(0, 4)); // e.g., 'pend', 'en g', etc.
         });
     }
 

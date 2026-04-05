@@ -443,6 +443,7 @@
                     <li>
                         <div class="item-info">
                             <strong>${t.tipo_tramite || 'Trámite Web'} - ${t.nombre_completo}</strong>
+                            ${t.correo ? `<span style="font-size: 0.8rem; color: var(--gray-400); display: block; margin-top: 0.1rem;"><i class="ph ph-envelope-simple"></i> ${t.correo}</span>` : ''}
                             <span>Ingresó: ${dateStr}</span>
                         </div>
                         <span style="color: ${estadoColor}; font-weight: 600; font-size: 0.85rem;">${est}</span>
