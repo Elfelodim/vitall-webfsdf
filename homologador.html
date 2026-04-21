@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Homologador | ClickSalud</title>
+    <link rel="icon" type="image/png" href="assets/images/logo.png">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    
+    <!-- Supabase -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    
+    <!-- Estilos base -->
+    <link rel="stylesheet" href="styles.css">
+    
+    <style>
+        .admin-header {
+            background-color: var(--blue-dark);
+            padding: 1rem 0;
+            color: white;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        }
+        .admin-header .logo {
+            color: white;
+        }
+        .header-links {
+            display: flex;
+            gap: 1.5rem;
+            align-items: center;
+        }
+        .header-links a {
+            color: rgba(255, 255, 255, 0.7);
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+        .header-links a:hover, .header-links a.active {
+            color: white;
+        }
+        
+        .dashboard-container {
+            padding: 3rem 0;
+            min-height: calc(100vh - 80px);
+            background-color: #f8fafc;
+        }
+
+        /* Nav & Tabs */
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--blue-main);
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            text-decoration: none;
+            transition: opacity 0.3s;
+        }
+        .back-link:hover {
+            opacity: 0.8;
+        }
+
+        .tab-menu {
+            display: flex;
+            gap: 0;
+            margin-top: 2rem;
+            margin-bottom: 0;
+        }
+        .tab-button {
+            padding: 0.75rem 1.5rem;
+            background: #f1f5f9;
+            color: var(--gray-600);
+            border: none;
+            border-radius: var(--radius-md) var(--radius-md) 0 0;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .tab-button.active {
+            background: white;
+            color: var(--blue-main);
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.02);
+            position: relative;
+        }
+        .tab-button.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: white;
+        }
+
+        /* Content Card */
+        .content-card {
+            background: white;
+            border-radius: 0 var(--radius-lg) var(--radius-lg) var(--radius-lg);
+            padding: 3rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+            max-width: 800px;
+        }
+
+        .section-title {
+            color: #1e293b;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+        
+        .section-subtitle {
+            color: #64748b;
+            font-size: 0.95rem;
+            margin-bottom: 2rem;
+        }
+
+        /* Upload Area */
+        .upload-wrapper {
+            border: 2px dashed #cbd5e1;
+            border-radius: var(--radius-lg);
+            padding: 4rem 2rem;
+            text-align: center;
+            background-color: #f8fafc;
+            transition: all 0.3s ease;
+            position: relative;
+            cursor: pointer;
+            margin-bottom: 3rem;
+        }
+        
+        .upload-wrapper:hover, .upload-wrapper.dragover {
+            background-color: #f1f5f9;
+            border-color: #94a3b8;
+        }
+
+        .folder-icon {
+            font-size: 3.5rem;
+            display: block;
+            margin: 0 auto 1.5rem;
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));
+        }
+
+        .upload-text {
+            color: #334155;
+            font-weight: 600;
+            font-size: 1.05rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .upload-subtext {
+            color: #94a3b8;
+            font-size: 0.85rem;
+        }
+
+        .file-input {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        /* Current Data Info */
+        .info-section {
+            padding-top: 2rem;
+            border-top: 1px solid #e2e8f0;
+        }
+        .info-section h4 {
+            color: #1e293b;
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+            font-weight: 700;
+        }
+        .info-section p {
+            color: #64748b;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            margin: 0;
+        }
+
+        /* Preview table styling */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+        .data-table th, .data-table td {
+            padding: 0.75rem;
+            border-bottom: 1px solid #e2e8f0;
+            text-align: left;
+        }
+        .status-badge {
+            padding: 0.25rem 0.5rem;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            background: #dcfce7; color: #166534;
+        }
+        .status-badge.error { background: #fee2e2; color: #991b1b; }
+    </style>
+</head>
+<body class="bg-light">
+
+    <!-- Admin Header -->
+    <header class="admin-header">
+        <div class="container" style="display: flex; justify-content: space-between; align-items: center;">
+            <div style="display: flex; gap: 2rem; align-items: center;">
+                <a href="index.html" class="logo">
+                    <img src="assets/images/logo.png" alt="ClickSalud Logo" style="height: 75px; width: auto; object-fit: contain;">
+                </a>
+                <nav class="header-links">
+                    <a href="gestion.html"><i class="ph ph-ticket"></i> Gestión Tickets</a>
+                    <a href="admin.html"><i class="ph ph-chart-pie"></i> Administración</a>
+                    <a href="homologador.html" class="active"><i class="ph ph-database"></i> Homologador</a>
+                    <a href="configuracion.html"><i class="ph ph-gear"></i> Sistemas</a>
+                </nav>
+            </div>
+            
+            <div>
+                <div class="header-user-info" style="margin-left: 1rem; padding-left: 1rem; border-left: 1px solid rgba(255,255,255,0.2);"></div>
+            </div>
+        </div>
+    </header>
+
+    <main class="dashboard-container">
+        <div class="container">
+            <!-- Breadcrumb / Back Link -->
+            <a href="admin.html" class="back-link">
+                <i class="ph-bold ph-arrow-left"></i> Volver al Panel Admin
+            </a>
+
+            <!-- Heading -->
+            <div>
+                <h1 style="color: #0f172a; font-family: var(--font-heading); font-size: 2.2rem; margin-bottom: 0.5rem; font-weight: 800;">Codificación Clínica</h1>
+                <p style="color: #64748b; font-size: 1rem; margin-bottom: 0;">Gestión masiva de CUPS (Procedimientos) y CIE-10 (Diagnósticos).</p>
+            </div>
+
+            <!-- Tabs -->
+            <div class="tab-menu">
+                <button class="tab-button active" id="tabCups">CUPS (Procedimientos)</button>
+                <button class="tab-button" id="tabCie10">CIE-10 (Diagnósticos)</button>
+            </div>
+
+            <!-- Content Card -->
+            <div class="content-card" style="position: relative; z-index: 2;">
+                <!-- Section CUPS -->
+                <div id="sectionImport">
+                    <h2 class="section-title">Importación Masiva (<span id="importLabel">CUPS</span>)</h2>
+                    <p class="section-subtitle">
+                        Sube un archivo .txt o .csv con el formato:<br>
+                        <code style="background: #f1f5f9; padding: 0.2rem 0.4rem; border-radius: 4px; color: #475569; font-size: 0.9rem;">CÓDIGO | NOMBRE</code> o 
+                        <code style="background: #f1f5f9; padding: 0.2rem 0.4rem; border-radius: 4px; color: #475569; font-size: 0.9rem;">CÓDIGO ; NOMBRE</code>
+                    </p>
+
+                    <div class="upload-wrapper" id="uploadArea">
+                        <span class="folder-icon">📁</span>
+                        <div class="upload-text">Haz clic para seleccionar o suelta tu archivo aquí</div>
+                        <div class="upload-subtext">Soporta: .txt, .csv, .psv</div>
+                        <input type="file" id="fileInput" class="file-input" accept=".txt,.csv,.psv">
+                    </div>
+
+                    <div class="info-section">
+                        <h4>Datos Actuales</h4>
+                        <p>Las tablas maestras permiten que los médicos tengan auto-completado y búsqueda instantánea al momento de registrar una historia clínica.</p>
+                    </div>
+                </div>
+
+                <!-- Section Preview -->
+                <div id="sectionPreview" style="display: none;">
+                    <h2 class="section-title">Vista Previa</h2>
+                    <p class="section-subtitle" id="rowCount">0 registros detectados.</p>
+                    
+                    <div style="overflow-x: auto; max-height: 350px; border: 1px solid #e2e8f0; border-radius: 6px; margin-bottom: 1.5rem;">
+                        <table class="data-table" id="previewTable">
+                            <thead style="background: #f8fafc; position: sticky; top: 0;">
+                                <tr>
+                                    <th>CÓDIGO</th>
+                                    <th>DESCRIPCIÓN</th>
+                                    <th>ESTADO</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+
+                    <div style="display: flex; justify-content: flex-end; gap: 1rem;">
+                        <button class="btn" style="background: white; border: 1px solid #cbd5e1; color: #475569;" id="btnCancel">Volver</button>
+                        <button class="btn btn-primary" id="btnImport">Importar Datos</button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <script src="auth.js"></script>
+    <script>
+        // Restricción de acceso
+        const currentUser = Auth.requireAuth('admin');
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const tabCups = document.getElementById('tabCups');
+            const tabCie10 = document.getElementById('tabCie10');
+            const importLabel = document.getElementById('importLabel');
+
+            tabCups.addEventListener('click', () => {
+                tabCups.classList.add('active');
+                tabCie10.classList.remove('active');
+                importLabel.textContent = 'CUPS';
+            });
+
+            tabCie10.addEventListener('click', () => {
+                tabCie10.classList.add('active');
+                tabCups.classList.remove('active');
+                importLabel.textContent = 'CIE-10';
+            });
+
+            const uploadArea = document.getElementById('uploadArea');
+            const fileInput = document.getElementById('fileInput');
+            
+            const sectionImport = document.getElementById('sectionImport');
+            const sectionPreview = document.getElementById('sectionPreview');
+            const previewTableBody = document.querySelector('#previewTable tbody');
+            const rowCountEl = document.getElementById('rowCount');
+            
+            let parsedData = [];
+
+            // UI drag & drop
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(ev => uploadArea.addEventListener(ev, e => e.preventDefault()));
+            ['dragenter', 'dragover'].forEach(ev => uploadArea.addEventListener(ev, () => uploadArea.classList.add('dragover')));
+            ['dragleave', 'drop'].forEach(ev => uploadArea.addEventListener(ev, () => uploadArea.classList.remove('dragover')));
+            
+            uploadArea.addEventListener('drop', e => handleFiles(e.dataTransfer.files));
+            fileInput.addEventListener('change', function() { handleFiles(this.files); });
+
+            function handleFiles(files) {
+                if (!files.length) return;
+                const file = files[0];
+                const reader = new FileReader();
+                reader.onload = e => processData(e.target.result);
+                reader.readAsText(file);
+            }
+
+            function processData(content) {
+                const lines = content.split('\n');
+                parsedData = [];
+                for (let line of lines) {
+                    line = line.trim();
+                    if (!line) continue;
+                    let sep = line.includes('|') ? '|' : (line.includes(';') ? ';' : null);
+                    if (sep) {
+                        const parts = line.split(sep);
+                        let code = parts[0].trim();
+                        let name = parts.slice(1).join(sep).trim();
+                        parsedData.push({ code, name, isValid: code && name });
+                    } else {
+                        parsedData.push({ code: 'Error', name: line, isValid: false });
+                    }
+                }
+                
+                // Render preview
+                previewTableBody.innerHTML = '';
+                parsedData.slice(0, 100).forEach(row => {
+                    const status = row.isValid ? '<span class="status-badge">Correcto</span>' : '<span class="status-badge error">Error</span>';
+                    previewTableBody.innerHTML += `<tr><td><strong>${row.code}</strong></td><td>${row.name}</td><td>${status}</td></tr>`;
+                });
+                
+                rowCountEl.textContent = `${parsedData.length} registros detectados`;
+                sectionImport.style.display = 'none';
+                sectionPreview.style.display = 'block';
+            }
+
+            document.getElementById('btnCancel').addEventListener('click', () => {
+                fileInput.value = '';
+                sectionPreview.style.display = 'none';
+                sectionImport.style.display = 'block';
+            });
+
+            document.getElementById('btnImport').addEventListener('click', async () => {
+                const valid = parsedData.filter(d => d.isValid);
+                if (!valid.length) return alert('No hay registros válidos.');
+                
+                const btn = document.getElementById('btnImport');
+                btn.innerHTML = 'Importando...';
+                btn.disabled = true;
+                
+                setTimeout(() => {
+                    alert(`¡${valid.length} registros importados como ${importLabel.textContent}!`);
+                    document.getElementById('btnCancel').click();
+                    btn.innerHTML = 'Importar Datos';
+                    btn.disabled = false;
+                }, 1500);
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configuración de Médicos y Agenda | ClickSalud</title>
+    <link rel="icon" type="image/png" href="assets/images/logo.png">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="styles.css">
+    
+    <style>
+        .config-container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 2rem;
+        }
+
+        .panel {
+            background: white;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--gray-200);
+            padding: 1.5rem;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .panel h3 {
+            margin-bottom: 1.5rem;
+            color: var(--blue-dark);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.1rem;
+            border-bottom: 1px solid var(--gray-200);
+            padding-bottom: 0.8rem;
+        }
+
+        .list-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .list-item {
+            padding: 0.8rem 1rem;
+            background: var(--gray-50);
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .list-item:hover {
+            border-color: var(--blue-main);
+            background: #f0f9ff;
+        }
+
+        .list-item.active {
+            background: var(--blue-main);
+            color: white;
+            border-color: var(--blue-main);
+        }
+
+        .list-item.active .badge-soft {
+            background: rgba(255,255,255,0.2);
+            color: white;
+        }
+        
+        .badge-soft {
+            font-size: 0.7rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 20px;
+            background: #e2e8f0;
+            color: var(--gray-600);
+        }
+
+        .schedule-grid {
+            display: grid;
+            grid-template-columns: 120px 1fr;
+            gap: 1rem;
+            align-items: center;
+            padding: 1rem;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-md);
+            margin-bottom: 1rem;
+            background: #fafafa;
+        }
+
+        .schedule-grid.disabled {
+            opacity: 0.5;
+            background: #f1f5f9;
+        }
+
+        .time-inputs {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .input-mini {
+            width: 110px;
+            padding: 0.5rem;
+            border: 1px solid var(--gray-300);
+            border-radius: var(--radius-sm);
+            font-family: inherit;
+        }
+
+        @media (max-width: 768px) {
+            .config-container {
+                grid-template-columns: 1fr;
+            }
+            .schedule-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body class="bg-light">
+
+    <!-- Top Navigation Admin -->
+    <header class="navbar scrolled" style="position: sticky; top: 0; z-index: 100; box-shadow: var(--shadow-sm);">
+        <div class="container nav-container" style="justify-content: space-between;">
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <a href="admin.html" class="logo">
+                     <i class="ph-bold ph-arrow-left" style="font-size: 1.2rem; color: var(--blue-dark);"></i>
+                     <img src="assets/images/logo.png" alt="Logo" style="height: 50px; margin-left: 1rem; object-fit: contain;">
+                </a>
+                <span class="badge" style="background: var(--purple-light); color: var(--purple-dark);">Gestión de Agendas</span>
+            </div>
+            <div class="header-user-info"></div>
+        </div>
+    </header>
+
+    <main class="config-container">
+        
+        <!-- Panel Izquierdo: Lista de Médicos -->
+        <div class="panel">
+            <h3><i class="ph-fill ph-users-three"></i> Directorio Médico</h3>
+            
+            <button class="btn btn-primary-outline btn-block" style="margin-bottom: 1rem;" id="btnNewDoctor">
+                <i class="ph-bold ph-plus"></i> Registrar Nuevo Médico
+            </button>
+            
+            <div class="list-group" id="doctorsList">
+                <div style="text-align: center; padding: 2rem; color: var(--gray-500);">
+                    <i class="ph ph-spinner-gap ph-spin" style="font-size: 2rem;"></i>
+                    <p>Cargando médicos...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel Derecho: Configuración del Seleccionado -->
+        <div class="panel" id="configPanel" style="display: none;">
+            
+            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1.5rem;">
+                <div>
+                    <h2 id="doctorNameTitle" style="color: var(--blue-dark); margin-bottom: 0.2rem;">Nombre del Médico</h2>
+                    <span id="doctorSpecBadge" class="badge badge-green">Especialidad</span>
+                </div>
+                <button class="btn btn-primary" id="btnSaveSchedule">
+                    <i class="ph-bold ph-floppy-disk"></i> Guardar Cambios
+                </button>
+            </div>
+
+            <!-- Formulario Perfil del Médico -->
+            <form id="doctorProfileForm" class="mb-4" style="background: #f8fafc; padding: 1.5rem; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 2rem;">
+                <input type="hidden" id="doctorId">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label>Nombre Completo</label>
+                        <input type="text" id="docName" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Especialidad</label>
+                        <select id="docSpec" required>
+                            <!-- Opciones cargadas dinámicamente -->
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Documento de Identidad</label>
+                        <input type="text" id="docIdNum" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Teléfono (Opcional)</label>
+                        <input type="text" id="docPhone">
+                    </div>
+                    <div class="form-group">
+                        <label>Correo Electrónico (Login)</label>
+                        <input type="email" id="docEmail" required placeholder="médico@clicksalud.com">
+                    </div>
+                </div>
+                <div style="text-align: right;">
+                    <button type="submit" class="btn btn-secondary" style="padding: 0.5rem 1rem;">Actualizar Perfil</button>
+                </div>
+            </form>
+
+            <h3 style="margin-top: 2rem;"><i class="ph-fill ph-calendar-plus"></i> Disponibilidad Semanal</h3>
+            
+            <div class="form-group" style="margin-bottom: 1.5rem; max-width: 300px;">
+                <label>Duración estándar por cita (minutos)</label>
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <i class="ph-fill ph-clock" style="color: var(--blue-main); font-size: 1.5rem;"></i>
+                    <input type="number" id="slotDuration" value="20" min="5" max="120" style="padding: 0.5rem; border-radius: 8px; border: 1px solid #ccc; width: 80px; font-weight: bold; text-align: center;"> 
+                    <span style="color: var(--gray-600); font-weight: 500;">min.</span>
+                </div>
+            </div>
+
+            <!-- Días de la semana -->
+            <div id="scheduleContainer">
+                <!-- Se inyectan desde JS los 7 días -->
+            </div>
+
+        </div>
+
+        <div class="panel" id="emptyStatePanel" style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: var(--gray-500); padding: 4rem 2rem;">
+            <i class="ph-fill ph-stethoscope" style="font-size: 4rem; color: #e2e8f0; margin-bottom: 1rem;"></i>
+            <h3>Selecciona o crea un médico</h3>
+            <p>Elige un médico del panel izquierdo para configurar su especialidad, datos y horas de atención en la agenda.</p>
+        </div>
+
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="auth.js"></script>
+    <script src="medicos_config.js"></script>
+</body>
+</html>

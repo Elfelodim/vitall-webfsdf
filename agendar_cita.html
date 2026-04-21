@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agendar Cita Especializada | ClickSalud</title>
+    <link rel="icon" type="image/png" href="assets/images/logo.png">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link rel="stylesheet" href="styles.css">
+    
+    <style>
+        .wizard-container {
+            max-width: 800px;
+            margin: 3rem auto;
+            background: white;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-xl);
+            overflow: hidden;
+            border: 1px solid var(--gray-200);
+        }
+
+        .wizard-header {
+            background: var(--blue-dark);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+            position: relative;
+        }
+
+        .wizard-steps {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .w-step {
+            width: 40px;
+            height: 40px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            position: relative;
+            z-index: 1;
+            transition: all 0.3s;
+        }
+
+        .w-step.active {
+            background: var(--green);
+            box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.3);
+        }
+
+        .w-step.completed {
+            background: var(--green);
+        }
+
+        .wizard-body {
+            padding: 2.5rem;
+        }
+
+        .step-content {
+            display: none;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .step-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--gray-200);
+        }
+
+        .doctor-card {
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-md);
+            padding: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .doctor-card:hover {
+            border-color: var(--blue-main);
+            background: #f0f9ff;
+        }
+
+        .doctor-card.selected {
+            border-color: var(--blue-main);
+            background: #e0f2fe;
+            box-shadow: 0 0 0 2px var(--blue-main);
+        }
+
+        .calendar-container {
+            margin-top: 1.5rem;
+        }
+
+        .slots-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 0.8rem;
+            margin-top: 1rem;
+        }
+
+        .time-slot {
+            padding: 0.6rem;
+            text-align: center;
+            border: 1px solid var(--gray-300);
+            border-radius: var(--radius-sm);
+            background: white;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .time-slot:hover {
+            border-color: var(--blue-main);
+            color: var(--blue-main);
+        }
+
+        .time-slot.selected {
+            background: var(--blue-main);
+            color: white;
+            border-color: var(--blue-main);
+        }
+
+        .time-slot.disabled {
+            background: var(--gray-100);
+            color: var(--gray-400);
+            cursor: not-allowed;
+            border-color: var(--gray-200);
+            text-decoration: line-through;
+        }
+
+        @media (max-width: 600px) {
+            .form-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body class="bg-light">
+
+    <header class="navbar scrolled">
+        <div class="container nav-container" style="justify-content: center;">
+            <a href="index.html" class="logo">
+                <img src="assets/images/logo.png" alt="Logo" style="height: 60px; object-fit: contain;">
+            </a>
+        </div>
+    </header>
+
+    <main class="container">
+        
+        <div class="wizard-container">
+            <div class="wizard-header">
+                <h2>Agenda tu Cita Especializada</h2>
+                <p style="color: var(--gray-300);">Sigue los pasos para confirmar tu espacio.</p>
+                
+                <div class="wizard-steps">
+                    <div class="w-step active" id="indicator-1">1</div>
+                    <div class="w-step" id="indicator-2">2</div>
+                    <div class="w-step" id="indicator-3">3</div>
+                    <div class="w-step" id="indicator-4">4</div>
+                </div>
+            </div>
+
+            <div class="wizard-body">
+                
+                <!-- PASO 1: DATOS PERSONALES -->
+                <div class="step-content active" id="step-1">
+                    <h3 style="margin-bottom: 1.5rem; color: var(--blue-dark);"><i class="ph-fill ph-user-circle"></i> Datos del Paciente</h3>
+                    
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Tipo de Documento</label>
+                            <select id="patDocType">
+                                <option value="CC">Cédula de Ciudadanía (CC)</option>
+                                <option value="TI">Tarjeta de Identidad (TI)</option>
+                                <option value="CE">Cédula de Extranjería (CE)</option>
+                                <option value="PA">Pasaporte</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Número de Documento</label>
+                            <input type="text" id="patDocNum" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Nombre Completo</label>
+                            <input type="text" id="patName" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Fecha de Nacimiento</label>
+                            <input type="date" id="patDob" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Teléfono (WhatsApp)</label>
+                            <input type="tel" id="patPhone" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Correo Electrónico</label>
+                            <input type="email" id="patEmail" required>
+                        </div>
+                        <div class="form-group" style="grid-column: 1 / -1;">
+                            <label>Dirección de Residencia</label>
+                            <input type="text" id="patAddress" required>
+                        </div>
+                        <div class="form-group" style="grid-column: 1 / -1;">
+                            <label>EPS / Aseguradora (O indicar "Particular")</label>
+                            <input type="text" id="patEps" placeholder="Ej: Sura, Sanitas, Particular" required>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PASO 2: TIPO DE CITA -->
+                <div class="step-content" id="step-2">
+                    <h3 style="margin-bottom: 1.5rem; color: var(--blue-dark);"><i class="ph-fill ph-stethoscope"></i> Motivo de Consulta</h3>
+                    
+                    <div class="form-group">
+                        <label>Especialidad Requerida</label>
+                        <select id="citaSpecialty">
+                            <option value="" disabled selected>Seleccione una...</option>
+                            <!-- Llenado x JS -->
+                        </select>
+                    </div>
+
+                    <div class="form-group" style="margin-top: 1.5rem;">
+                        <label>Tipo de Cita</label>
+                        <select id="citaType">
+                            <option value="primera_vez">Consulta de Primera Vez</option>
+                            <option value="control">Cita de Control</option>
+                            <option value="examen">Lectura de Exámenes / Procedimiento</option>
+                        </select>
+                        <small style="color:var(--gray-500); display:block; margin-top:0.3rem;">Si es tu primera vez aquí con esta especialidad, selecciona "Primera Vez".</small>
+                    </div>
+
+                    <div class="form-group" style="margin-top: 1.5rem;">
+                        <label>Observaciones (Opcional)</label>
+                        <textarea id="citaObs" rows="3" style="width: 100%; border: 1px solid var(--gray-300); border-radius: var(--radius-sm); padding: 0.8rem;"></textarea>
+                    </div>
+                </div>
+
+                <!-- PASO 3: SELECCIÓN MÉDICO Y FECHAS -->
+                <div class="step-content" id="step-3">
+                    <h3 style="margin-bottom: 1.5rem; color: var(--blue-dark);"><i class="ph-fill ph-calendar-check"></i> Elección de Fecha</h3>
+                    
+                    <div style="margin-bottom: 1.5rem;">
+                        <label style="font-weight: bold; display:block; margin-bottom: 0.5rem;">Especialistas Disponibles</label>
+                        <div id="doctorsListContainer" style="display: grid; gap: 1rem;">
+                            <!-- Radios / Cards inyectados aquí -->
+                        </div>
+                        <p id="noDoctorsMsg" style="display:none; color:var(--red); font-size: 0.9rem;">No hay especialistas asignados para esta área actualmente.</p>
+                    </div>
+
+                    <div id="dateTimeContainer" class="calendar-container" style="display: none; padding-top:1.5rem; border-top:1px solid var(--gray-200);">
+                        <div class="form-group">
+                            <label>Selecciona la Fecha</label>
+                            <input type="date" id="citaDate" min="" required style="max-width: 200px;">
+                        </div>
+
+                        <div style="margin-top: 1.5rem;">
+                            <label style="font-weight: bold; display:block;">Horarios Disponibles</label>
+                            <div id="slotsGrid" class="slots-grid">
+                                <div style="color:var(--gray-500); grid-column: 1/-1; padding: 1rem 0;">Selecciona una fecha primero.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PASO 4: CONFIRMACIÓN -->
+                <div class="step-content" id="step-4">
+                    <div style="text-align: center; margin-bottom: 2rem;">
+                        <div style="width: 80px; height: 80px; background: var(--green-light); border-radius: 50%; display: flex; align-items:center; justify-content:center; margin: 0 auto 1rem auto;">
+                            <i class="ph-bold ph-check" style="font-size: 3rem; color: var(--green);"></i>
+                        </div>
+                        <h3 style="color: var(--blue-dark);">Resumen de tu Cita</h3>
+                        <p style="color: var(--gray-600);">Revisa los datos antes de confirmar.</p>
+                    </div>
+
+                    <div style="background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: var(--radius-md); padding: 1.5rem;">
+                        <ul style="list-style: none; padding: 0; margin: 0;">
+                            <li style="margin-bottom: 0.8rem;"><strong>Paciente:</strong> <span id="resNombre"></span></li>
+                            <li style="margin-bottom: 0.8rem;"><strong>Especialidad:</strong> <span id="resEsp"></span></li>
+                            <li style="margin-bottom: 0.8rem;"><strong>Médico:</strong> <span id="resMed"></span></li>
+                            <li style="margin-bottom: 0.8rem;"><strong>Fecha:</strong> <span id="resFecha"></span></li>
+                            <li style="margin-bottom: 0.8rem;"><strong>Hora:</strong> <span id="resHora"></span></li>
+                            <li><strong>Tipo de Cita:</strong> <span id="resTipo"></span></li>
+                        </ul>
+                    </div>
+
+                    <div style="margin-top: 2rem; background: #e0f2fe; padding: 1rem; border-radius: var(--radius-sm); border-left: 4px solid var(--blue-main);">
+                        <p style="margin: 0; font-size: 0.9rem; color: var(--blue-dark);">
+                            <i class="ph-fill ph-info"></i> Al confirmar, autorizas el tratamiento de tus datos para uso exclusivo de este agendamiento médico.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="nav-buttons">
+                    <button type="button" class="btn btn-secondary" id="btnPrev" style="display: none;">
+                        <i class="ph-bold ph-arrow-left"></i> Anterior
+                    </button>
+                    <div style="flex-grow: 1;"></div>
+                    <button type="button" class="btn btn-primary" id="btnNext">
+                        Siguiente <i class="ph-bold ph-arrow-right"></i>
+                    </button>
+                    <button type="button" class="btn btn-primary" id="btnSubmit" style="display: none; background: var(--green); border-color: var(--green);">
+                        <i class="ph-bold ph-check-circle"></i> Confirmar Cita Especializada
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="agendar_cita.js"></script>
+</body>
+</html>
