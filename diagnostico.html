@@ -1,0 +1,167 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Diagnostico ClickSalud v2</title>
+    <style>
+        body { font-family: monospace; background: #0d1117; color: #c9d1d9; padding: 2rem; max-width: 960px; margin: 0 auto; }
+        h1 { color: #58a6ff; border-bottom: 1px solid #30363d; padding-bottom: .5rem; }
+        .step { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 1rem 1.5rem; margin-bottom: 1rem; }
+        .step-title { font-size: 1.1rem; font-weight: bold; margin-bottom: .75rem; color: #e6edf3; }
+        .ok { color: #3fb950; } .error { color: #f85149; } .warn { color: #d29922; } .info { color: #58a6ff; }
+        pre { background: #0d1117; padding: .75rem; border-radius: 4px; overflow-x: auto; font-size: .82rem; border: 1px solid #21262d; white-space: pre-wrap; word-break: break-all; margin-top:.5rem; }
+        button { background: #238636; color: white; border: none; padding: .6rem 1.5rem; border-radius: 6px; cursor: pointer; font-size: .95rem; margin-top: .75rem; margin-right:.5rem; }
+        button.danger { background: #da3633; }
+        button:hover { opacity:.85; }
+        input { background: #161b22; color: #c9d1d9; border: 1px solid #30363d; padding: .5rem; border-radius: 4px; width: 300px; margin-right: .5rem; }
+        label { display: block; margin-bottom: .3rem; color: #8b949e; font-size: .85rem; }
+        .form-row { margin-bottom: .75rem; }
+        .badge { display:inline-block; padding:.15rem .5rem; border-radius:4px; font-size:.8rem; margin-left:.5rem; }
+        .badge-ok { background:#1a3a1a; color:#3fb950; } .badge-err { background:#3a1a1a; color:#f85149; }
+    </style>
+</head>
+<body>
+<h1>🔬 Diagnostico ClickSalud v2</h1>
+
+<div class="step">
+    <div class="step-title">Paso 1 — Conexion Supabase</div>
+    <div id="step1">Verificando...</div>
+</div>
+
+<div class="step">
+    <div class="step-title">Paso 2 — Contenido de la tabla usuarios</div>
+    <div id="step2">Esperando...</div>
+    <button onclick="checkTable()">Recargar tabla</button>
+</div>
+
+<div class="step">
+    <div class="step-title">Paso 3 — Insertar usuario admin (desde el navegador)</div>
+    <p style="color:#8b949e;font-size:.9rem;margin-bottom:.75rem;">Si la tabla esta vacia, este boton inserta el usuario administrador directamente.</p>
+    <button onclick="insertAdmin()">Insertar admin@clicksalud.com</button>
+    <div id="step3" style="margin-top:1rem;"></div>
+</div>
+
+<div class="step">
+    <div class="step-title">Paso 4 — Probar login</div>
+    <div class="form-row"><label>Email</label><input type="email" id="testEmail" value="admin@clicksalud.com"></div>
+    <div class="form-row"><label>Contrasena</label><input type="text" id="testPass" value="admin"></div>
+    <button onclick="testLogin()">Probar Login</button>
+    <div id="step4" style="margin-top:1rem;"></div>
+</div>
+
+<div class="step">
+    <div class="step-title">Paso 5 — Calcular hash SHA-256</div>
+    <div class="form-row"><input type="text" id="hashInput" value="admin"><button onclick="doHash()" style="margin-top:0;">Calcular</button></div>
+    <div id="step5" style="margin-top:.5rem;">El hash de "admin" debe ser: <span class="ok">8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918</span></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SURL='https://zdmiylgzioarginxrmbd.supabase.co';
+const SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpkbWl5bGd6aW9hcmdpbnhybWJkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE1MDAzNzIsImV4cCI6MjA4NzA3NjM3Mn0.xHFSB1pJYB28rMUH57YrOyMNWPwfNh_PXNigHwVSqRM';
+let client=null;
+
+async function hashPassword(p){
+    const b=new TextEncoder().encode(p);
+    const h=await crypto.subtle.digest('SHA-256',b);
+    return Array.from(new Uint8Array(h)).map(x=>x.toString(16).padStart(2,'0')).join('');
+}
+
+async function init(){
+    const el=document.getElementById('step1');
+    try{
+        if(!window.supabase)throw new Error('Libreria Supabase no cargo. Verifica tu internet.');
+        client=window.supabase.createClient(SURL,SKEY);
+        el.innerHTML='<span class="ok">✅ OK — Cliente Supabase creado correctamente.</span><br><span class="info">URL: '+SURL+'</span>';
+        await checkTable();
+    }catch(e){
+        el.innerHTML='<span class="error">❌ ERROR: '+e.message+'</span>';
+    }
+}
+
+async function checkTable(){
+    const el=document.getElementById('step2');
+    el.innerHTML='Consultando...';
+    try{
+        const{data,error}=await client.from('usuarios').select('id,email,nombre,modulos,must_change_password,password_hash');
+        if(error){
+            el.innerHTML='<span class="error">❌ Error leyendo tabla usuarios:</span><pre>'+JSON.stringify(error,null,2)+'</pre>'
+                +'<div class="warn">⚠️ Posible causa: RLS activo. Ejecuta en Supabase SQL Editor:<pre>ALTER TABLE public.usuarios DISABLE ROW LEVEL SECURITY;</pre></div>';
+            return;
+        }
+        if(!data||data.length===0){
+            el.innerHTML='<span class="warn">⚠️ La tabla "usuarios" existe pero esta VACIA.</span><br>Usa el Paso 3 para insertar el admin.';
+            return;
+        }
+        let rows=data.map(u=>'Email: '+u.email+' | Nombre: '+u.nombre+' | Modulos: '+JSON.stringify(u.modulos)+' | Hash inicio: '+u.password_hash.substring(0,16)+'...').join('\n');
+        el.innerHTML='<span class="ok">✅ '+data.length+' usuario(s) encontrados:</span><pre>'+rows+'</pre>';
+    }catch(e){
+        el.innerHTML='<span class="error">❌ Excepcion: '+e.message+'</span>';
+    }
+}
+
+async function insertAdmin(){
+    const el=document.getElementById('step3');
+    el.innerHTML='Insertando...';
+    try{
+        const hash=await hashPassword('admin');
+        const payload={
+            email:'admin@clicksalud.com',
+            password_hash:hash,
+            nombre:'Administrador',
+            modulos:['gestion','admin','sistemas'],
+            tramites:['Afiliaciones y Traslados','Polizas y Planes de Salud','Agendamiento de Citas Especializadas','Gestion de Autorizaciones Medicas','Reclamacion de Medicamentos','Asesoria Legal en Salud'],
+            must_change_password:true
+        };
+        el.innerHTML='<span class="info">Hash calculado: '+hash+'</span><br>Enviando a Supabase...';
+        const{data,error}=await client.from('usuarios').upsert([payload],{onConflict:'email'});
+        if(error){
+            el.innerHTML='<span class="error">❌ Error al insertar:</span><pre>'+JSON.stringify(error,null,2)+'</pre>'
+                +'<div class="warn">Si el error es "42501" o "permission denied", RLS esta bloqueando los INSERT.<br>Ejecuta en SQL Editor:<pre>ALTER TABLE public.usuarios DISABLE ROW LEVEL SECURITY;</pre></div>';
+            return;
+        }
+        el.innerHTML='<span class="ok">✅ Usuario admin insertado/actualizado correctamente!</span><br>Ahora prueba el login en el Paso 4.';
+        await checkTable();
+    }catch(e){
+        el.innerHTML='<span class="error">❌ Excepcion: '+e.message+'</span>';
+    }
+}
+
+async function testLogin(){
+    const el=document.getElementById('step4');
+    if(!client){el.innerHTML='<span class="error">❌ Cliente no listo</span>';return;}
+    const email=document.getElementById('testEmail').value.trim().toLowerCase();
+    const pass=document.getElementById('testPass').value;
+    const pHash=await hashPassword(pass);
+    el.innerHTML='<span class="info">→ Hash calculado: '+pHash+'</span>';
+
+    // Buscar por email primero
+    const{data,error}=await client.from('usuarios').select('*').eq('email',email).maybeSingle();
+    if(error){
+        el.innerHTML+='<br><span class="error">❌ Error de consulta: '+JSON.stringify(error)+'</span>';
+        return;
+    }
+    if(!data){
+        el.innerHTML+='<br><span class="error">❌ No existe usuario con email: '+email+'</span><br>Usa el Paso 3 para crearlo.';
+        return;
+    }
+    el.innerHTML+='<br><span class="ok">✅ Usuario encontrado: '+data.nombre+'</span>';
+    el.innerHTML+='<br>Hash en DB: <span class="info">'+data.password_hash+'</span>';
+    if(data.password_hash===pHash){
+        el.innerHTML+='<br><span class="ok" style="font-size:1.1rem;">🎉 HASHES COINCIDEN — El login FUNCIONARA correctamente.</span>';
+        el.innerHTML+='<br><span class="info">must_change_password: '+data.must_change_password+'</span>';
+    }else{
+        el.innerHTML+='<br><span class="error">❌ HASHES NO COINCIDEN.</span><pre>Calculado: '+pHash+'\nEn DB:     '+data.password_hash+'</pre>';
+    }
+}
+
+async function doHash(){
+    const t=document.getElementById('hashInput').value;
+    const h=await hashPassword(t);
+    document.getElementById('step5').innerHTML='Hash de "'+t+'": <span class="ok">'+h+'</span>';
+}
+
+init();
+</script>
+</body>
+</html>

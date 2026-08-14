@@ -11,38 +11,6 @@ const Auth = {
         return window.supabaseClientAuth;
     },
 
-    // Usuarios del prototipo (Modo Demo / Fallback si no existe la tabla 'usuarios' en Supabase)
-    mockUsers: [
-        {
-            email: 'admin@clicksalud.com',
-            password: 'admin',
-            nombre: 'Gestor Integral',
-            modulos: ['gestion', 'admin', 'sistemas'],
-            tramites: [
-                'Afiliaciones y Traslados',
-                'Pólizas y Planes de Salud',
-                'Agendamiento de Citas Especializadas',
-                'Gestión de Autorizaciones Médicas',
-                'Reclamación de Medicamentos',
-                'Asesoría Legal en Salud'
-            ]
-        },
-        {
-            email: 'asesor1@clicksalud.com',
-            password: '123',
-            nombre: 'Asesor de Trámites Básicos',
-            modulos: ['gestion'],
-            tramites: ['Afiliaciones y Traslados', 'Agendamiento de Citas Especializadas', 'Pólizas y Planes de Salud']
-        },
-        {
-            email: 'legal@clicksalud.com',
-            password: '123',
-            nombre: 'Asesoría Jurídica',
-            modulos: ['gestion'],
-            tramites: ['Asesoría Legal en Salud', 'Reclamación de Medicamentos', 'Gestión de Autorizaciones Médicas']
-        }
-    ],
-
     // Hash de contraseña en frontend (Cifrado SHA-256)
     async hashPassword(password) {
         const msgBuffer = new TextEncoder().encode(password);
@@ -51,59 +19,172 @@ const Auth = {
         return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
     },
 
+    lastError: null,
+
     async login(email, password) {
+        this.lastError = null;
         try {
             const client = this.getClient();
-            if(!client) return 'FAILED';
-
-            // 1. Iniciamos sesión REAL en el motor de seguridad de Supabase
-            const { data: authData, error: authError } = await client.auth.signInWithPassword({
-                email: email,
-                password: password,
-            });
-
-            // Si falla la contraseña o no existe en la sección Authentication de Supabase
-            if (authError || !authData.user) {
-                console.warn("Credenciales inválidas en Supabase Auth:", authError);
+            if(!client) {
+                this.lastError = "No se pudo inicializar el cliente de Supabase.";
                 return 'FAILED';
             }
 
-            // 2. Traer permisos y módulos (Perfil del Usuario) desde la tabla 'usuarios'
-            const { data: profileData, error: profileError } = await client
+            const cleanEmail = (email || '').trim().toLowerCase();
+            const pHash = await this.hashPassword(password);
+
+            // Validar si existe la cuenta por correo primero
+            const { data, error } = await client
                 .from('usuarios')
                 .select('*')
-                .eq('email', email)
-                .single();
+                .eq('email', cleanEmail)
+                .maybeSingle();
 
-            let validUser = null;
-            if(!profileError && profileData) {
-                // Parseamos los JSON de permisos
-                profileData.modulos = typeof profileData.modulos === 'string' ? JSON.parse(profileData.modulos) : profileData.modulos;
-                profileData.tramites = typeof profileData.tramites === 'string' ? JSON.parse(profileData.tramites) : profileData.tramites;
-                validUser = profileData;
-            } else {
-                // Si el usuario existe en Login pero aún no lo has guardado en la tabla de permisos, le damos permisos base temporal
-                validUser = { email: email, nombre: 'Asesor Autorizado', modulos: ['gestion', 'admin', 'sistemas'], tramites: [], must_change_password: false };
+            if (error) {
+                console.warn("Error consultando usuario en Supabase:", error);
+                if (error.code === '42501') {
+                    this.lastError = "Permiso denegado por RLS en Supabase. Ejecuta en el SQL Editor: ALTER TABLE public.usuarios DISABLE ROW LEVEL SECURITY;";
+                } else {
+                    this.lastError = `Error Supabase (${error.code || 'DB'}): ${error.message}`;
+                }
+                return 'FAILED';
             }
 
-            // Mantenemos la variable en navegador para no desconfigurar tu página visualmente
-            localStorage.setItem('clicksalud_session', JSON.stringify(validUser));
+            if (!data) {
+                this.lastError = `El correo "${cleanEmail}" no está registrado. Si es tu primera vez, puedes crear tu cuenta de Administrador haciendo clic en la pestaña 'Registrar Administrador'.`;
+                return 'FAILED';
+            }
+
+            // Comparar hashes de contraseña
+            if (data.password_hash !== pHash) {
+                this.lastError = "La contraseña ingresada es incorrecta. Por favor verifica tus credenciales.";
+                return 'FAILED';
+            }
+
+            // Parseamos los JSON de permisos
+            data.modulos = typeof data.modulos === 'string' ? JSON.parse(data.modulos) : (data.modulos || []);
+            data.tramites = typeof data.tramites === 'string' ? JSON.parse(data.tramites) : (data.tramites || []);
+
+            // Guardar sesión del usuario en localStorage
+            localStorage.setItem('clicksalud_session', JSON.stringify(data));
             
-            if(validUser.must_change_password) return 'CHANGE_PASSWORD';
+            if(data.must_change_password) return 'CHANGE_PASSWORD';
             return 'SUCCESS';
             
         } catch(e) {
             console.error("Error en el login:", e);
+            this.lastError = `Excepción del sistema: ${e.message}`;
             return 'FAILED';
         }
     },
 
-    async logout() {
-        const client = this.getClient();
-        if(client) {
-            // Elimina la sesión maestra de seguridad en Supabase
-            await client.auth.signOut();
+    async registerUser(nombre, email, password, modulos = ['gestion', 'admin', 'sistemas'], tramites = []) {
+        this.lastError = null;
+        try {
+            const client = this.getClient();
+            if(!client) {
+                this.lastError = "No se pudo inicializar el cliente de Supabase.";
+                return false;
+            }
+
+            const cleanEmail = (email || '').trim().toLowerCase();
+            const pHash = await this.hashPassword(password);
+
+            const payload = {
+                email: cleanEmail,
+                password_hash: pHash,
+                nombre: nombre.trim(),
+                modulos: modulos,
+                tramites: tramites,
+                must_change_password: false
+            };
+
+            const { data, error } = await client
+                .from('usuarios')
+                .insert([payload])
+                .select()
+                .single();
+
+            if (error) {
+                console.error("Error registrando usuario:", error);
+                if (error.code === '23505') {
+                    this.lastError = `El correo "${cleanEmail}" ya está registrado en el sistema. Puedes iniciar sesión directamente.`;
+                } else if (error.code === '42501') {
+                    this.lastError = "Permiso denegado por Row Level Security (RLS) en Supabase. Ejecuta en el SQL Editor de Supabase: ALTER TABLE public.usuarios DISABLE ROW LEVEL SECURITY;";
+                } else {
+                    this.lastError = `Error al crear usuario (${error.code || 'DB'}): ${error.message}`;
+                }
+                return false;
+            }
+
+            if (data) {
+                data.modulos = typeof data.modulos === 'string' ? JSON.parse(data.modulos) : (data.modulos || []);
+                data.tramites = typeof data.tramites === 'string' ? JSON.parse(data.tramites) : (data.tramites || []);
+                localStorage.setItem('clicksalud_session', JSON.stringify(data));
+            }
+            return true;
+        } catch(e) {
+            console.error("Error en el registro:", e);
+            this.lastError = `Excepción del sistema: ${e.message}`;
+            return false;
         }
+    },
+
+    async resetPassword(email, newPassword) {
+        this.lastError = null;
+        try {
+            const client = this.getClient();
+            if(!client) {
+                this.lastError = "No se pudo conectar a la base de datos.";
+                return false;
+            }
+
+            const cleanEmail = (email || '').trim().toLowerCase();
+            const pHash = await this.hashPassword(newPassword);
+
+            // Verificar primero si el correo existe
+            const { data: existingUser, error: checkError } = await client
+                .from('usuarios')
+                .select('email, nombre')
+                .eq('email', cleanEmail)
+                .maybeSingle();
+
+            if (checkError) {
+                console.error("Error verificando usuario:", checkError);
+                this.lastError = `Error en base de datos: ${checkError.message}`;
+                return false;
+            }
+
+            if (!existingUser) {
+                this.lastError = `El correo "${cleanEmail}" no está registrado en la plataforma.`;
+                return false;
+            }
+
+            // Actualizar la contraseña en Supabase
+            const { error } = await client
+                .from('usuarios')
+                .update({ password_hash: pHash, must_change_password: false })
+                .eq('email', cleanEmail);
+
+            if (error) {
+                console.error("Error actualizando contraseña:", error);
+                if (error.code === '42501') {
+                    this.lastError = "Permiso denegado por RLS en Supabase. Ejecuta en Supabase SQL Editor: ALTER TABLE public.usuarios DISABLE ROW LEVEL SECURITY;";
+                } else {
+                    this.lastError = `Error Supabase (${error.code || 'DB'}): ${error.message}`;
+                }
+                return false;
+            }
+
+            return true;
+        } catch(e) {
+            console.error("Error restableciendo contraseña:", e);
+            this.lastError = `Excepción del sistema: ${e.message}`;
+            return false;
+        }
+    },
+
+    logout() {
         localStorage.removeItem('clicksalud_session');
         window.location.href = 'login.html';
     },

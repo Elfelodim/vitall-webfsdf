@@ -76,3 +76,34 @@ CREATE TABLE IF NOT EXISTS public.citas (
 INSERT INTO public.especialidades (nombre) VALUES 
 ('Cardiología'), ('Pediatría'), ('Dermatología'), ('Medicina General')
 ON CONFLICT DO NOTHING;
+
+-- =========================================================================
+-- 5. Tabla de Usuarios y Permisos (Módulo de Autenticación de Versión 1)
+-- =========================================================================
+CREATE TABLE IF NOT EXISTS public.usuarios (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    email TEXT UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
+    nombre TEXT NOT NULL,
+    modulos JSONB DEFAULT '[]'::jsonb,
+    tramites JSONB DEFAULT '[]'::jsonb,
+    must_change_password BOOLEAN DEFAULT true,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
+);
+
+-- Habilitar lectura/escritura pública si es para prototipo, o desactivar RLS
+ALTER TABLE public.usuarios DISABLE ROW LEVEL SECURITY;
+
+-- Insertar usuario administrador inicial para el primer inicio de sesión
+-- Email: admin@clicksalud.com
+-- Contraseña temporal: admin (se exige cambiar en el primer inicio de sesión)
+-- Hash SHA-256 de "admin" es: 8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918
+INSERT INTO public.usuarios (email, password_hash, nombre, modulos, tramites, must_change_password)
+VALUES (
+    'admin@clicksalud.com',
+    '8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918',
+    'Administrador ERP Salud',
+    '["gestion", "admin", "sistemas"]'::jsonb,
+    '["Historia Clínica Electrónica (EHR)", "Facturación Electrónica & RIPS", "Agendamiento & Agenda Médica", "Contabilidad & Finanzas Médicas", "Inventario de Insumos & Medicamentos", "Asistente Inteligente con IA Clínica"]'::jsonb,
+    false
+) ON CONFLICT (email) DO NOTHING;

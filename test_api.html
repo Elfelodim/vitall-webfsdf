@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Diagnóstico de API Gemini</title>
+    <style>
+        body { font-family: sans-serif; padding: 40px; background: #1a1a1a; color: white; }
+        .box { background: #2a2a2a; padding: 20px; border-radius: 10px; border: 1px solid #444; }
+        input { width: 100%; padding: 10px; margin: 10px 0; background: #333; color: white; border: 1px solid #555; }
+        button { background: #d4af37; color: black; border: none; padding: 10px 20px; cursor: pointer; font-weight: bold; }
+        pre { background: #000; padding: 15px; border-radius: 5px; overflow-x: auto; color: #0f0; }
+    </style>
+</head>
+<body>
+    <h1>Diagnóstico de Conexión Google Gemini</h1>
+    <div class="box">
+        <p>Pega tu API Key aquí:</p>
+        <input type="text" id="key" placeholder="AIzaSy...">
+        <button onclick="testKey()">Ejecutar Diagnóstico</button>
+        <p id="status"></p>
+        <pre id="output">Los resultados aparecerán aquí...</pre>
+    </div>
+
+    <script>
+        async function testKey() {
+            const key = document.getElementById('key').value.trim();
+            const output = document.getElementById('output');
+            const status = document.getElementById('status');
+            
+            if (!key) { alert('Ingresa una clave'); return; }
+            
+            output.textContent = "Consultando a Google...";
+            status.textContent = "⌛ Intentando listar modelos disponibles...";
+
+            try {
+                // Probamos listar modelos en v1beta
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${key}`);
+                const data = await res.json();
+                
+                if (data.error) {
+                    output.textContent = JSON.stringify(data.error, null, 2);
+                    status.textContent = "❌ Error de Google.";
+                } else {
+                    const models = data.models.map(m => m.name.replace('models/', ''));
+                    output.textContent = "Modelos encontrados en tu cuenta:\n\n" + models.join('\n');
+                    status.textContent = "✅ ¡Conexión exitosa!";
+                }
+            } catch (err) {
+                output.textContent = err.message;
+                status.textContent = "❌ Error de red.";
+            }
+        }
+    </script>
+</body>
+</html>

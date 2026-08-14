@@ -128,13 +128,13 @@
             <div class="config-grid">
                 <!-- Tarifas Card -->
                 <div class="config-card">
-                    <h3 class="config-title"><i class="ph-fill ph-currency-dollar" style="color: var(--green);"></i> Gestión de Tarifas Base</h3>
+                    <h3 class="config-title"><i class="ph-fill ph-currency-dollar" style="color: var(--green);"></i> Gestión de Tarifas ERP & Servicios</h3>
                     
                     <ul class="config-list" style="margin-bottom: 1.5rem;">
                         <li>
                             <div class="item-info">
-                                <strong>Tutelas y Derechos</strong>
-                                <span>Aplica para radicación básica</span>
+                                <strong>Consulta Médica General / Especializada</strong>
+                                <span>Tarifa base por atención clínica</span>
                             </div>
                             <div style="display: flex; align-items: center; gap: 0.5rem;">
                                 <input type="number" value="120000" style="width: 120px; padding: 0.4rem; border: 1px solid var(--gray-300); border-radius: 4px; text-align: right;">
@@ -143,18 +143,18 @@
                         </li>
                         <li>
                             <div class="item-info">
-                                <strong>Autorizaciones Médicas</strong>
-                                <span>Por documento autorizado</span>
+                                <strong>Licencia ERP Médico Mensual</strong>
+                                <span>Suscripción Historia Clínica + RIPS</span>
                             </div>
                             <div style="display: flex; align-items: center; gap: 0.5rem;">
-                                <input type="number" value="35000" style="width: 120px; padding: 0.4rem; border: 1px solid var(--gray-300); border-radius: 4px; text-align: right;">
+                                <input type="number" value="150000" style="width: 120px; padding: 0.4rem; border: 1px solid var(--gray-300); border-radius: 4px; text-align: right;">
                                 <button class="btn-action" title="Guardar cambios"><i class="ph ph-floppy-disk"></i></button>
                             </div>
                         </li>
                         <li>
                             <div class="item-info">
-                                <strong>Agendamiento de Citas</strong>
-                                <span>Manejo de prioridad estándar</span>
+                                <strong>Generación Paquete RIPS MinSalud</strong>
+                                <span>Por lote de facturación DIAN</span>
                             </div>
                             <div style="display: flex; align-items: center; gap: 0.5rem;">
                                 <input type="number" value="45000" style="width: 120px; padding: 0.4rem; border: 1px solid var(--gray-300); border-radius: 4px; text-align: right;">
@@ -163,38 +163,38 @@
                         </li>
                         <li>
                             <div class="item-info">
-                                <strong>Afiliaciones (Pack Básico)</strong>
-                                <span>Seguridad Social Integral</span>
+                                <strong>Módulo Multisede IPS</strong>
+                                <span>Control de salas y consultorios</span>
                             </div>
                             <div style="display: flex; align-items: center; gap: 0.5rem;">
-                                <input type="number" value="80000" style="width: 120px; padding: 0.4rem; border: 1px solid var(--gray-300); border-radius: 4px; text-align: right;">
+                                <input type="number" value="300000" style="width: 120px; padding: 0.4rem; border: 1px solid var(--gray-300); border-radius: 4px; text-align: right;">
                                 <button class="btn-action" title="Guardar cambios"><i class="ph ph-floppy-disk"></i></button>
                             </div>
                         </li>
                     </ul>
 
-                    <button class="btn btn-primary-outline btn-block btn-save"><i class="ph ph-plus"></i> Añadir Nueva Tarifa</button>
+                    <button class="btn btn-primary-outline btn-block btn-save"><i class="ph ph-plus"></i> Añadir Nueva Tarifa ERP</button>
                 </div>
 
                 <!-- Códigos Contables Card -->
                 <div class="config-card">
-                    <h3 class="config-title"><i class="ph-fill ph-books" style="color: var(--blue-main);"></i> Códigos Contables y Sincronizaciones</h3>
+                    <h3 class="config-title"><i class="ph-fill ph-books" style="color: var(--blue-main);"></i> Códigos Contables y Sincronizaciones ERP</h3>
                     
                     <form class="config-form">
                         <div class="form-group">
-                            <label for="code-ingresos-tutelas">Cuenta de Ingresos (Tutelas)</label>
-                            <input type="text" id="code-ingresos-tutelas" value="415510 - Asesorías Jurídicas">
+                            <label for="code-ingresos-tutelas">Cuenta de Ingresos (Consultas & Servicios Médicos)</label>
+                            <input type="text" id="code-ingresos-tutelas" value="415510 - Servicios de Salud & Atención Clínica">
                         </div>
                         <div class="form-group">
-                            <label for="code-ingresos-citas">Cuenta de Ingresos (Citas Médicas)</label>
-                            <input type="text" id="code-ingresos-citas" value="415520 - Gestión Administrativa">
+                            <label for="code-ingresos-citas">Cuenta de Ingresos (Facturación RIPS & ERP)</label>
+                            <input type="text" id="code-ingresos-citas" value="415520 - Licencias & Facturación Electrónica DIAN">
                         </div>
                         <div class="form-group">
-                            <label for="code-gastos">Cuenta de Gastos Operativos</label>
-                            <input type="text" id="code-gastos" value="511010 - Honorarios Profesionales">
+                            <label for="code-gastos">Cuenta de Gastos (Insumos Médicos & Medicamentos)</label>
+                            <input type="text" id="code-gastos" value="511010 - Inventario & Honorarios Médicos">
                         </div>
                         <div class="form-group">
-                            <label for="sync-url">URL Webhook Sincronización (ERP)</label>
+                            <label for="sync-url">URL Webhook Sincronización (ERP / MinSalud RIPS)</label>
                             <input type="url" id="sync-url" value="https://api.erp-clicksalud.com/v1/sync">
                         </div>
                         
@@ -220,7 +220,7 @@
                         
                         <div class="form-group">
                             <label>Correo Electrónico (Para Login)</label>
-                            <input type="email" id="newUserEmail" required placeholder="juan@clicksalud.com">
+                            <input type="email" id="newUserEmail" required placeholder="ejemplo@gmail.com">
                         </div>
                         
                         <div class="form-group">
@@ -261,7 +261,7 @@
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="auth.js"></script>
+    <script src="auth.js?v=2"></script>
     <script>
         // Restricción de acceso para el módulo 'sistemas'
         const currentUser = Auth.requireAuth('sistemas');
@@ -271,8 +271,8 @@
             const btn = document.getElementById('btnCreateUser');
             const res = document.getElementById('createUserRes');
             
-            const name = document.getElementById('newUserName').value;
-            const email = document.getElementById('newUserEmail').value;
+            const name = document.getElementById('newUserName').value.trim();
+            const email = document.getElementById('newUserEmail').value.trim().toLowerCase();
             const pass = document.getElementById('newUserPass').value;
             
             // Collect select multiples
@@ -301,7 +301,7 @@
                 const client = Auth.getClient();
                 if(!client) throw new Error("No hay conexión con la Base de datos principal.");
 
-                const { data, error } = await client.from('usuarios').insert([payload]);
+                const { data, error } = await client.from('usuarios').insert([payload]).select();
                 
                 if(error) throw error;
 

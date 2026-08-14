@@ -310,7 +310,7 @@
         </div>
     </main>
 
-    <script src="auth.js"></script>
+    <script src="auth.js?v=3"></script>
     <script>
         // Restricción de acceso
         const currentUser = Auth.requireAuth('admin');
@@ -401,14 +401,13 @@
                     const height = Math.max((val / maxVal) * 100, 15);
                     const percent = total > 0 ? Math.round((val / total) * 100) : 0;
                     
-                    let abreviado = cat.substring(0, 5);
-                    if(cat.includes('Polizas')) abreviado = 'Póliz';
-                    if(cat.includes('Afiliaciones')) abreviado = 'Afil';
-                    if(cat.includes('Agendamiento')) abreviado = 'Citas';
-                    if(cat.includes('Autorizaciones')) abreviado = 'Autor';
-                    if(cat.includes('Reclam')) abreviado = 'Medic';
-                    if(cat.includes('Legal')) abreviado = 'Legal';
-                    if(cat.includes('Internacional')) abreviado = 'Inter';
+                    let abreviado = cat.substring(0, 7);
+                    if(cat.includes('Historia') || cat.includes('EHR')) abreviado = 'Hist.Clin';
+                    if(cat.includes('RIPS') || cat.includes('Factur')) abreviado = 'RIPS/Fact';
+                    if(cat.includes('Agend') || cat.includes('Cita')) abreviado = 'Agenda';
+                    if(cat.includes('Contab') || cat.includes('Inven')) abreviado = 'Contab/Inv';
+                    if(cat.includes('Inteligente') || cat.includes('IA')) abreviado = 'IA Clin';
+                    if(cat.includes('IPS') || cat.includes('Sede')) abreviado = 'IPS/Sedes';
 
                     chartContainer.innerHTML += `
                         <div class="chart-bar" style="height: ${height}%; position: relative;" title="${cat}: ${val} casos (${percent}%)">
