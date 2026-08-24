@@ -1,0 +1,661 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// --- User Management & Auth ---
+model User {
+  id            String    @id @default(uuid())
+  name          String?
+  email         String    @unique
+  password      String    // Hashed
+  role          String    @default("User") // Admin, Doctor, Nurse, Receptionist
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+// --- Patient Management ---
+model Patient {
+  id             String          @id @default(uuid())
+  firstName      String
+  secondName     String?
+  lastName       String
+  secondLastName String?
+  documentType   String
+  documentNumber String          @unique
+  dateOfBirth    String
+  sex            String
+  address        String
+  phone          String
+  email          String?
+  eps            String          // Legacy string, consider migrating to Insurer relation
+  insurerId      String?
+  insurer        Insurer?        @relation(fields: [insurerId], references: [id])
+  regime         String
+  userType       String?         // Contributivo, Subsidiado, Particular, etc (RIPS)
+  zone           String?         // Urbana, Rural (RIPS)
+  status         String          @default("Active")
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  consultations  MedicalRecord[]
+  appointments   Appointment[]
+  surgeries      Surgery[]
+  invoices       Invoice[]
+  labResults     LabResult[]
+  diagnosticImages DiagnosticImage[]
+  machineScans   MachineScan[]
+  hospitalizations Hospitalization[]
+  dentalRecords  DentalRecord[]
+  medicalOrders  MedicalOrder[]
+  surgeryReports SurgeryReport[]
+  serviceOrders  ServiceOrder[]
+  payments       PaymentReceipt[]
+}
+
+model ServiceOrder {
+  id              String   @id @default(uuid())
+  consecutive     String   @unique
+  prefix          String
+  number          Int      // For auto-increment
+  
+  patientDocument String
+  patient         Patient  @relation(fields: [patientDocument], references: [documentNumber])
+  
+  admissionDate   DateTime @default(now())
+  contractType    String?  // PGP, Evento, Capita (Legacy, consider migrating to Contract model enum)
+  program         String?  // Programa especifico
+  
+  contractId      String?
+  contract        Contract? @relation(fields: [contractId], references: [id])
+
+  status          String   @default("Open") // Open, Closed, Billed
+  
+  // Relations
+  payments        PaymentReceipt[]
+  items           ServiceOrderItem[]
+  invoices        Invoice[]
+}
+
+model PaymentReceipt {
+  id              String   @id @default(uuid())
+  receiptNumber   String   @unique // Consecutivo de caja
+  prefix          String?
+  number          Int?     // For auto-increment
+  date            DateTime @default(now())
+  
+  patientDocument String
+  patient         Patient  @relation(fields: [patientDocument], references: [documentNumber])
+  
+  serviceOrderId  String?
+  serviceOrder    ServiceOrder? @relation(fields: [serviceOrderId], references: [id])
+  
+  invoiceId       String?
+  invoice         Invoice?      @relation(fields: [invoiceId], references: [id])
+  
+  amount          Float
+  paymentMethod   String   // Cash, Card, Transfer
+  concept         String   // Copago, Cuota Moderadora, Particular
+  
+  notes           String?
+}
+
+// --- Electronic Medical Records (EMR) ---
+model MedicalRecord {
+  id                    String      @id @default(uuid())
+  patientDocument       String
+  patient               Patient     @relation(fields: [patientDocument], references: [documentNumber])
+  doctorId              String
+  doctorName            String
+  reasonForVisit        String
+  clinicalHistory       String      // Enfermedad actual
+  
+  // RIPS Fields (Res 2275)
+  modality             String      @default("01") // 01: Intramural, 02: Extramural, 03: Telemedicina
+  cause                String      @default("13") // 13: Enfermedad General
+  purpose              String      @default("10") // 10: Tratamiento
+  serviceCode          String?     // Código Servicio Habilitación (if different from general)
+  
+  // Vital Signs
+  bloodPressure        String?
+  heartRate            Int?
+  respiratoryRate       Int?
+  temperature           Float?
+  weight                Float?
+  height                Float?
+
+  // Physical Exam
+  physicalExamFindings  String
+
+  // Plan
+  treatmentPlan         String
+  observations          String?
+
+  diagnoses             Diagnosis[]
+  createdAt            DateTime    @default(now())
+}
+
+model Diagnosis {
+  id              String        @id @default(uuid())
+  medicalRecordId String
+  medicalRecord   MedicalRecord @relation(fields: [medicalRecordId], references: [id])
+  code            String        // CIE-10
+  description     String
+  type            String        // Principal, Relacionado
+}
+
+model LabResult {
+  id              String        @id @default(uuid())
+  patientDocument String
+  patient         Patient       @relation(fields: [patientDocument], references: [documentNumber])
+  testName        String
+  value           String
+  referenceRange  String
+  unit            String
+  status          String        // Normal, Abnormal, Critical
+  performedAt     DateTime      @default(now())
+  observations    String?
+  fileUrl         String?       // New field for file uploads
+}
+
+model DiagnosticImage {
+  id              String        @id @default(uuid())
+  patientDocument String
+  patient         Patient       @relation(fields: [patientDocument], references: [documentNumber])
+  imageType       String        // X-Ray, MRI, etc.
+  imageUrl        String
+  report          String?
+  performedAt     DateTime      @default(now())
+}
+
+model MachineScan {
+  id              String        @id @default(uuid())
+  patientDocument String
+  patient         Patient       @relation(fields: [patientDocument], references: [documentNumber])
+  machineType     String
+  rawOutputUrl    String?
+  interpretation  String?
+  performedAt     DateTime      @default(now())
+}
+
+// --- Hospitalization ---
+model Hospitalization {
+  id                String      @id @default(uuid())
+  patientDocument   String
+  patient           Patient     @relation(fields: [patientDocument], references: [documentNumber])
+  admissionDate     DateTime    @default(now())
+  dischargeDate     DateTime?
+  bedNumber         String
+  admissionDiagnosis String
+  status            String      @default("Active") // Active, Discharged
+  doctorInCharge    String
+  
+  evolutions        Evolution[]
+  epicrisis         Epicrisis?
+}
+
+model Evolution {
+  id                String      @id @default(uuid())
+  hospitalizationId String
+  hospitalization   Hospitalization @relation(fields: [hospitalizationId], references: [id])
+  date              DateTime    @default(now())
+  note              String
+  doctorName        String
+  
+  // Vitals recorded during evolution
+  bloodPressure     String?
+  heartRate         Int?
+  temperature       Float?
+}
+
+model Epicrisis {
+  id                String      @id @default(uuid())
+  hospitalizationId String      @unique
+  hospitalization   Hospitalization @relation(fields: [hospitalizationId], references: [id])
+  date              DateTime    @default(now())
+  summary           String
+  treatments        String
+  recommendations   String
+}
+
+// --- Scheduling & Surgery ---
+model Appointment {
+  id              String   @id @default(uuid())
+  patientDocument String
+  patient         Patient  @relation(fields: [patientDocument], references: [documentNumber])
+  doctorId        String
+  doctorName      String
+  date            DateTime
+  startTime       String
+  endTime         String
+  type            String   // General, Specialist
+  status          String   // Scheduled, Confirmed, Cancelled
+  notes           String?
+}
+
+model OperatingRoom {
+  id        String    @id @default(uuid())
+  name      String
+  status    String    // Available, Occupied
+  surgeries Surgery[]
+}
+
+model Surgery {
+  id              String        @id @default(uuid())
+  patientDocument String
+  patient         Patient       @relation(fields: [patientDocument], references: [documentNumber])
+  surgeonId       String
+  surgeonName     String
+  procedureCode   String
+  procedureName   String
+  urgency         String        // Elective, Urgent
+  requestedDate   DateTime
+  status          String        // Pending, Scheduled
+  operatingRoomId String?
+  operatingRoom   OperatingRoom? @relation(fields: [operatingRoomId], references: [id])
+}
+
+// --- Inventory ---
+model Product {
+  id           String             @id @default(uuid())
+  code         String             @unique
+  name         String
+  type         String             // Medicine, MedicalDevice
+  category     String
+  unit         String
+  price        Float
+  currentStock Int                // Renamed from stock
+  minStock     Int
+  expirationDate DateTime?
+  status       String             @default("Active")
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+
+  inventories  InventoryMovement[]
+  batches      Batch[]
+}
+
+model Batch {
+  id             String   @id @default(uuid())
+  productId      String
+  product        Product  @relation(fields: [productId], references: [id])
+  batchNumber    String
+  expirationDate DateTime
+  quantity       Int
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model InventoryMovement {
+  id          String   @id @default(uuid())
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id])
+  type        String   // In, Out, Adjustment
+  quantity    Int
+  unitPrice   Float    @default(0)
+  totalValue  Float    @default(0)
+  reason      String
+  date        DateTime @default(now())
+  reference   String?
+}
+
+// --- Medical Orders & Annex 1 ---
+model CUPS {
+  id          String @id @default(uuid())
+  code        String @unique
+  description String
+  category    String? // e.g., 'Procedimiento Quirúrgico', 'Laboratorio', 'Imagen'
+}
+
+model Cie10 {
+  id          String @id @default(uuid())
+  code        String @unique
+  description String
+}
+
+model MedicalOrder {
+  id                String   @id @default(uuid())
+  patientDocument   String
+  patient           Patient  @relation(fields: [patientDocument], references: [documentNumber])
+  clinicalRecordId  String   // ID of Consultation or Hospitalization
+  recordType        String   // 'Consultation' or 'Hospitalization'
+  date              DateTime @default(now())
+  doctorName        String
+  
+  // JSON Data for flexibility
+  medications       String   @default("[]") // [{ productId, quantity, dosage, duration, notes }]
+  procedures        String   @default("[]") // [{ code (CUPS), name, quantity, notes }]
+  incapacity        String   @default("{}") // { days, startDate, diagnosis, type, description }
+  
+  recommendations   String   // Plan de manejo / Recomendaciones generales
+  
+  status            String   @default("Pending") // Pending, Processed, Cancelled
+}
+
+// --- Billing ---
+model Invoice {
+  id              String        @id @default(uuid())
+  patientDocument String
+  patient         Patient       @relation(fields: [patientDocument], references: [documentNumber])
+  invoiceNumber   String        @unique
+  date            DateTime      @default(now())
+  dueDate         DateTime
+  subtotal        Float
+  tax             Float
+  total           Float
+  status          String        // Draft, Issued, Paid
+  ripsGenerated   Boolean       @default(false)
+
+  items         InvoiceItem[]
+
+  // DIAN Fields
+  cufe             String?       // Código Único de Facturación Electrónica
+  qrCode           String?       // For visualization
+  paymentMethod    String        @default("Cash") // Cash, Credit, Debit, Transfer
+  dianStatus       String        @default("Draft") // Draft, Signed, Sent, Accepted, Rejected
+  
+  // Resolution Info at time of emission
+  resolutionNumber String?
+  prefix           String?
+  
+  // JSON Snapshot of customer details (to preserve history even if patient data changes)
+  customerSnapshot String        @default("{}")
+
+  // Relation to Service Order (Optional: Invoice can be direct sale)
+  serviceOrderId   String?
+  serviceOrder     ServiceOrder? @relation(fields: [serviceOrderId], references: [id])
+
+  // --- Portfolio Fields ---
+  currentBalance   Float         @default(0) // Saldo pendiente
+  
+  submissionId     String?
+  submission       BillSubmission? @relation(fields: [submissionId], references: [id])
+  
+  glosaStatus      String        @default("None") // None, Partial, Total
+  
+  payments         PaymentReceipt[]
+  glosas           Glosa[]
+  creditNotes      CreditNote[]
+}
+
+model BillingResolution {
+  id               String   @id @default(uuid())
+  resolutionNumber String   @unique // Num. Resolución DIAN
+  prefix           String   // Prefijo (e.g. SETT)
+  fromNumber       Int
+  toNumber         Int
+  currentNumber    Int      // Track next available
+  startDate        DateTime
+  endDate          DateTime
+  technicalKey     String   // Clave técnica for CUFE generation
+  status           String   @default("Active") // Active, Expired, Depleted
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model InvoiceItem {
+  id          String  @id @default(uuid())
+  invoiceId   String
+  invoice     Invoice @relation(fields: [invoiceId], references: [id])
+  code        String
+  description String
+  quantity    Int
+  unitPrice   Float
+  total       Float
+}
+
+// --- Service Order Items ---
+model ServiceOrderItem {
+  id              String       @id @default(uuid())
+  serviceOrderId  String
+  serviceOrder    ServiceOrder @relation(fields: [serviceOrderId], references: [id])
+  
+  cupsCode        String
+  cupsDescription String
+  quantity        Int
+  unitValue       Float
+  totalValue      Float
+}
+
+// --- Contracts & Pricing ---
+
+model StandardManual {
+  id          String   @id @default(uuid())
+  code        String   // CUPS Code
+  manualType  String   // SOAT, ISS2000, ISS2001, ISS2004
+  year        Int
+  value       Float    // Price (SOAT) or Points (ISS)
+  
+  @@unique([code, manualType, year])
+}
+
+// --- Insurers (EPS) ---
+model Insurer {
+  id               String   @id @default(uuid())
+  name             String
+  nit              String   @unique
+  code             String   @unique // Código habilitación
+  regime           String   // Contributivo, Subsidiado, etc.
+  status           String   @default("Active")
+  
+  contracts        Contract[]
+  patients         Patient[]
+  submissions      BillSubmission[]
+}
+
+model Contract {
+  id                   String   @id @default(uuid())
+  
+  // Link to Insurer
+  insurerId            String?
+  insurer              Insurer? @relation(fields: [insurerId], references: [id])
+  
+  clientName           String   // Fallback / Cache
+  nit                  String
+  code                 String   @unique // Internal code
+  
+  manualType           String   // SOAT, ISS2000, ISS2001, ISS2004, OWN, PACKAGE
+  adjustmentPercentage Float    @default(0)
+  
+  validityStart        DateTime
+  validityEnd          DateTime
+  
+  budgetCap            Float?
+  capPeriod            String?
+  currentExecuted      Float    @default(0)
+  
+  status               String   @default("Active")
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  rates                ContractRate[]
+  serviceOrders        ServiceOrder[]
+}
+
+model ContractRate {
+  id          String   @id @default(uuid())
+  contractId  String
+  contract    Contract @relation(fields: [contractId], references: [id])
+  
+  cupsCode    String
+  value       Float
+  
+  @@unique([contractId, cupsCode])
+}
+
+// --- Accounting & Payroll ---
+model Account {
+  id      String @id @default(uuid())
+  code    String @unique // PUC
+  name    String
+  type    String // Asset, Liability
+  balance Float
+
+  journalLines JournalEntryLine[]
+}
+
+model Payroll {
+  id               String   @id @default(uuid())
+  employeeId       String
+  employeeName     String
+  period           String
+  basicSalary      Float
+  healthDeduction  Float
+  pensionDeduction Float
+  netPay           Float
+  status           String   // Pending, Paid
+}
+
+// --- Dentistry ---
+model DentalRecord {
+  id              String   @id @default(uuid())
+  patientDocument String
+  patient         Patient  @relation(fields: [patientDocument], references: [documentNumber])
+  date            DateTime @default(now())
+  doctorName      String
+  reasonForVisit  String
+  
+  // Odontogram Data stored as JSON
+  // Structure: { "18": "Caries", "17": "Healthy", ... }
+  odontogramData  String   @default("{}") 
+  
+  treatmentPlan   String
+  observations    String
+}
+
+// --- Clinical Reports (Surgery & Anesthesia) ---
+model SurgeryReport {
+  id              String   @id @default(uuid())
+  patientDocument String
+  patient         Patient  @relation(fields: [patientDocument], references: [documentNumber])
+  date            DateTime @default(now())
+  surgeonName     String
+  assistantName   String?
+  anesthesiologistName String?
+  
+  startTime       String
+  endTime         String
+  surgeryType     String   // Urgent, Elective
+  
+  preOpDiagnosis  String
+  postOpDiagnosis String
+  
+  procedureName   String   // Main Procedure
+  procedureCode   String?  // CUPS
+  
+  description     String   // Surgical technique
+  findings        String
+  complications   String?
+  
+  anesthesiaRecord AnesthesiaRecord?
+}
+
+model AnesthesiaRecord {
+  id              String        @id @default(uuid())
+  surgeryReportId String        @unique
+  surgeryReport   SurgeryReport @relation(fields: [surgeryReportId], references: [id])
+  
+  anesthesiologist String
+  anesthesiaType  String        // General, Regional, Local, Sedation
+  asaScore        String        // I, II, III, IV, V, E
+  
+  startTime       String
+  endTime         String
+  
+  // JSON Data
+  vitalsLog       String        @default("[]") // [{ time, bp, hr, sat }]
+  medications     String        @default("[]") // [{ drug, dose, time }]
+  
+  observations    String
+}
+
+// --- Advanced Billing & Portfolio ---
+
+model BillSubmission {
+  id             String    @id @default(uuid())
+  stickerNumber  String    @unique // Número de Radicado
+  submissionDate DateTime  @default(now())
+  carrier        String?   // Mensajería
+  trackingNumber String?
+  
+  insurerId      String
+  insurer        Insurer   @relation(fields: [insurerId], references: [id])
+  
+  status         String    @default("Submitted") // Submitted, Received, Processed
+
+  invoices       Invoice[]
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+}
+
+model Glosa {
+  id          String   @id @default(uuid())
+  invoiceId   String
+  invoice     Invoice  @relation(fields: [invoiceId], references: [id])
+  
+  code        String   // Code detailing the reason (Manual de Glosas)
+  description String
+  value       Float    // Valor glosado
+  acceptedValue Float  @default(0) // Valor aceptado por la IPS
+  balance     Float    // Valor pendiente por conciliar
+  
+  status      String   @default("Open") // Open, Accepted (Credit Note), Refuted, Conciliated
+  responseDate DateTime?
+  response    String? // The response/justification from the IPS
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model CreditNote {
+  id          String   @id @default(uuid())
+  invoiceId   String
+  invoice     Invoice  @relation(fields: [invoiceId], references: [id])
+  
+  number      String   @unique
+  value       Float
+  reason      String
+  
+  dianStatus  String   @default("Draft") // Draft, Sent, Accepted
+  cufe        String?  // CUDE
+  
+  createdAt   DateTime @default(now())
+}
+model JournalEntry {
+  id            String   @id @default(uuid())
+  date          DateTime @default(now())
+  description   String
+  referenceId   String?  // ID of Invoice, Receipt, etc.
+  referenceType String?  // 'Invoice', 'Payment', 'Payroll'
+  
+  lines         JournalEntryLine[]
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model JournalEntryLine {
+  id             String       @id @default(uuid())
+  journalEntryId String
+  journalEntry   JournalEntry @relation(fields: [journalEntryId], references: [id])
+  
+  accountCode    String       // Link to Account.code
+  account        Account      @relation(fields: [accountCode], references: [code])
+  
+  debit          Float        @default(0)
+  credit         Float        @default(0)
+  
+  notes          String?
+}
+
+model AccountingConfig {
+  key         String @id // e.g. 'GLOBAL_ASSET_ACCOUNT'
+  accountCode String // The selected PUC code
+  label       String? // Human readable name
+  module      String? // 'Billing', 'Inventory', etc.
+}

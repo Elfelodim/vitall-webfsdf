@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+erp/node_modules/
+
+# Next.js
+.next/
+erp/.next/
+out/
+erp/out/
+
+# Environment Variables
+.env
+.env*.local
+.env*
+erp/.env*
+*.env
+
+# Logs and databases
+*.log
+*.db
+dev.db
+erp/dev.db
+*.sqlite
+
+# OS
+.DS_Store
+Thumbs.db
