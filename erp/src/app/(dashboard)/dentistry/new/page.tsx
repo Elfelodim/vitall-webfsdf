@@ -1,11 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import PatientHeader from '@/components/clinical/PatientHeader';
 import Odontogram from '@/components/clinical/Odontogram';
 
-export default function NewDentalConsultationPage() {
+function DentalConsultationContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const patientId = searchParams.get('patientId');
@@ -212,5 +212,13 @@ export default function NewDentalConsultationPage() {
                 }
             `}</style>
         </div>
+    );
+}
+
+export default function NewDentalConsultationPage() {
+    return (
+        <Suspense fallback={<div className="p-8 text-center text-slate-500">Cargando módulo odontológico...</div>}>
+            <DentalConsultationContent />
+        </Suspense>
     );
 }
