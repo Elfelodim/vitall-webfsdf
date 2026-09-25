@@ -1,5 +1,7 @@
 import { accountingService } from '@/lib/services/accountingService';
 
+export const dynamic = 'force-dynamic';
+
 export default async function PayrollPage() {
     const currentPeriod = new Date().toISOString().slice(0, 7); // YYYY-MM
     const payroll = await accountingService.calculatePayroll(currentPeriod);
