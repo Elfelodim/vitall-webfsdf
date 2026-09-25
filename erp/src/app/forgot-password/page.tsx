@@ -6,6 +6,8 @@ import Link from 'next/link';
 
 export default function ForgotPasswordPage() {
     const [email, setEmail] = useState('');
+    const [newPassword, setNewPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState('');
     const [error, setError] = useState('');
@@ -17,11 +19,17 @@ export default function ForgotPasswordPage() {
         setError('');
         setMessage('');
 
+        if (newPassword && newPassword !== confirmPassword) {
+            setError('Las contraseñas no coinciden.');
+            setLoading(false);
+            return;
+        }
+
         try {
             const response = await fetch('/api/auth/forgot-password', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email }),
+                body: JSON.stringify({ email, newPassword }),
             });
 
             const data = await response.json();
@@ -29,9 +37,7 @@ export default function ForgotPasswordPage() {
             if (!response.ok) {
                 setError(data.message || 'Ocurrió un error');
             } else {
-                setMessage('Se ha enviado un enlace de recuperación a su correo electrónico.');
-                // Optional: redirect after some time
-                // setTimeout(() => router.push('/login'), 5000);
+                setMessage(data.message || '¡Contraseña actualizada exitosamente!');
             }
         } catch (err) {
             setError('Error de conexión. Intente de nuevo.');
@@ -44,18 +50,18 @@ export default function ForgotPasswordPage() {
         <div className="login-container">
             <div className="login-card glass-panel">
                 <div className="brand-header">
-                    <div className="logo">AN</div>
-                    <h1>ANTINEO</h1>
-                    <p>Recuperar Contraseña</p>
+                    <div className="logo">CS</div>
+                    <h1>ClickSalud ERP</h1>
+                    <p>Recuperación de Contraseña</p>
                 </div>
 
                 {!message ? (
                     <form onSubmit={handleSubmit} className="login-form">
                         <p className="instruction-text">
-                            Ingrese su correo electrónico y le enviaremos instrucciones para restablecer su contraseña.
+                            Ingrese su correo electrónico y su nueva contraseña para restablecer el acceso a su cuenta ERP.
                         </p>
                         <div className="form-group">
-                            <label htmlFor="email">Correo Electrónico</label>
+                            <label htmlFor="email">Correo Electrónico Registrado</label>
                             <input
                                 id="email"
                                 type="email"
@@ -63,26 +69,59 @@ export default function ForgotPasswordPage() {
                                 onChange={(e) => setEmail(e.target.value)}
                                 required
                                 className="input-field"
-                                placeholder="ejemplo@antineo.com"
+                                placeholder="ejemplo@clicksalud.com"
+                            />
+                        </div>
+
+                        <div className="form-group">
+                            <label htmlFor="newPassword">Nueva Contraseña</label>
+                            <input
+                                id="newPassword"
+                                type="password"
+                                value={newPassword}
+                                onChange={(e) => setNewPassword(e.target.value)}
+                                required
+                                minLength={6}
+                                className="input-field"
+                                placeholder="Mínimo 6 caracteres"
+                            />
+                        </div>
+
+                        <div className="form-group">
+                            <label htmlFor="confirmPassword">Confirmar Nueva Contraseña</label>
+                            <input
+                                id="confirmPassword"
+                                type="password"
+                                value={confirmPassword}
+                                onChange={(e) => setConfirmPassword(e.target.value)}
+                                required
+                                minLength={6}
+                                className="input-field"
+                                placeholder="Repita la nueva contraseña"
                             />
                         </div>
 
                         {error && <div className="error-message">{error}</div>}
 
                         <button type="submit" className="login-btn" disabled={loading}>
-                            {loading ? <span className="loader"></span> : 'Enviar Instrucciones'}
+                            {loading ? <span className="loader"></span> : 'Restablecer Contraseña'}
                         </button>
                     </form>
                 ) : (
                     <div className="success-container">
                         <div className="success-icon">✓</div>
                         <p className="success-message">{message}</p>
+                        <div style={{ marginTop: '1.5rem' }}>
+                            <Link href="/login" className="login-btn" style={{ textDecoration: 'none', display: 'inline-block' }}>
+                                Iniciar Sesión Ahora
+                            </Link>
+                        </div>
                     </div>
                 )}
 
                 <div className="login-footer">
                     <Link href="/login" className="back-link">
-                        Volver al inicio de sesión
+                        ← Volver al inicio de sesión
                     </Link>
                 </div>
             </div>
